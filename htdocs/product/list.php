@@ -372,7 +372,7 @@ if (!empty($conf->variants->enabled) && (!empty($conf->global->PRODUIT_ATTRIBUTE
 	$sql .= " AND pac.rowid IS NULL";
 }
 
-if ($search_ref)     $sql .= natural_search('p.ref', $search_ref);
+if ($search_ref)     $sql .= " AND (".natural_search('p.ref', $search_ref, 0, 1)." OR ".natural_search('pfp.ref_fourn', $search_ref, 0, 1).")";
 if ($search_label)   $sql .= natural_search('p.label', $search_label);
 if ($search_barcode) $sql .= natural_search('p.barcode', $search_barcode);
 if (isset($search_tosell) && dol_strlen($search_tosell) > 0 && $search_tosell != -1) $sql .= " AND p.tosell = ".((int) $search_tosell);
