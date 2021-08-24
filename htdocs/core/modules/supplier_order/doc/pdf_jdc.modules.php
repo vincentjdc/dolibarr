@@ -750,6 +750,16 @@ class pdf_jdc extends ModelePDFSuppliersOrders
 		if ($delivery_address_line_count > 1) {
 			$heightrecbox += 2 * $delivery_address_line_count;
 		}
+		if (!empty($object->cond_reglement_code) || $object->cond_reglement_id) {
+			$lib_condition_paiement = $outputlangs->transnoentities("PaymentCondition".$object->cond_reglement_code) != ('PaymentCondition'.$object->cond_reglement_code) ? $outputlangs->transnoentities("PaymentCondition".$object->cond_reglement_code) : $outputlangs->convToOutputCharset($object->cond_reglement_doc ? $object->cond_reglement_doc : $object->cond_reglement_label);
+			$lib_condition_paiement = str_replace('\n', "\n", $lib_condition_paiement);
+			$lib_condition_paiement_line_count = count(preg_split('/\n/', $lib_condition_paiement));
+			if ($lib_condition_paiement_line_count > 1) {
+				$heightrecbox += 2 * $lib_condition_paiement_line_count;
+			}
+			$heightrecbox += 2;
+		}
+
 		$pdf->SetDrawColor(192, 192, 192);
 		$pdf->Rect($this->marge_gauche, $posy, $widthrecbox, $heightrecbox, 'FD');
 
@@ -800,7 +810,7 @@ class pdf_jdc extends ModelePDFSuppliersOrders
                 $pdf->SetFont('', '', $default_font_size - 2);
                 $pdf->SetXY($posxval, $posy);
 
-                $delivery_contact = $outputlangs->transnoentities("UnloadingWithoutJDC");
+                $delivery_contact = $outputlangs->transnoentities("Déchargement sans assistance de JDC AIRPORTS");
                 $pdf->MultiCell(80, 5, $delivery_contact, 0, 'L');
 
                 $posy = $pdf->GetY() + 2;
@@ -831,7 +841,7 @@ class pdf_jdc extends ModelePDFSuppliersOrders
                         $pdf->SetFont('', '', $default_font_size - 2);
                         $pdf->SetXY($posxval, $posy);
 
-			$delivery_contact = $outputlangs->transnoentities("ContactByPhone",
+			$delivery_contact = $outputlangs->transnoentities("Contacter %s\npar téléphone au %s",
 				$object->array_options['options_delivery_contact'],
 				$object->array_options['options_delivery_contact_phone']
 			);
