@@ -67,8 +67,6 @@ class PaiementFourn extends Paiement
 	 */
 	public $type_code;
 
-
-
 	/**
 	 *	Constructor
 	 *

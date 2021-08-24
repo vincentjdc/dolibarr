@@ -981,6 +981,58 @@ class modFournisseur extends DolibarrModules
 			'cd.info_bits' => ['rule' => 'zeroifnull'],
 			'cd.special_code' => ['rule' => 'zeroifnull'],
 		];
+
+		//Import Supplier payments
+		$r++;
+		$this->import_code[$r] = 'paiementfourn_'.$r;
+		$this->import_label[$r] = 'Supplier Invoice Payments';
+		$this->import_icon[$r] = $this->picto;
+		$this->import_entities_array[$r] = [];
+		$this->import_tables_array[$r] = ['pf' => MAIN_DB_PREFIX.'paiementfourn', 'pfff' => MAIN_DB_PREFIX.'paiementfourn_facturefourn'];
+		$this->import_fields_array[$r] = [
+			'pf.ref'    => 'Payment Ref',
+			'pf.amount' => 'Amount *',
+			'pf.multicurrency_amount'     => 'Multi Currency Amount',
+			'pf.num_paiement'    => 'Ref paiement',
+			'pf.note'         => 'Note',
+			'pf.fk_bank'            => 'Bank ID*',
+			'pf.statut' => 'Status',
+			'pf.fk_paiement' => 'Paiement',
+			'pfff.fk_facturefourn' => 'Supplier Invoice Id *',
+			'pfff.amount' => 'Montant *',
+
+		];
+
+		if (!empty($conf->multicurrency->enabled)) {
+			$this->import_fields_array[$r]['pfff.multicurrency_code'] = 'Currency';
+			$this->import_fields_array[$r]['pfff.multicurrency_tx'] = 'Currency';
+			$this->import_fields_array[$r]['pfff.multicurrency_amount'] = 'Currency Amount';
+		}
+
+		$this->import_fieldshidden_array[$r] = ['pfff.fk_paiementfourn' => 'lastrowid-'.MAIN_DB_PREFIX.'paiementfourn'];
+		$this->import_regex_array[$r] = [
+			'pf.multicurrency_code' => 'code@'.MAIN_DB_PREFIX.'multicurrency',
+			'pfff.multicurrency_code' => 'code@'.MAIN_DB_PREFIX.'multicurrency',
+		];
+		//$this->import_updatekeys_array[$r] = ['cd.fk_commande' => 'Purchase Order Id'];
+		$this->import_convertvalue_array[$r] = [
+			'pf.fk_bank' => [
+				'rule'    => 'fetchidfromref',
+				'file'    => '/compta/bank/class/account.class.php',
+				'class'   => 'Account',
+				'method'  => 'fetch',
+				'element' => 'bank_account'
+			],
+			'pf.fk_facturefourn' => [
+				'rule'    => 'fetchidfromref',
+				'file'    => '/compta/fourn/class/fournisseur.facture.class.php',
+				'class'   => 'FactureFournisseur',
+				'method'  => 'fetch',
+				'element' => 'invoice_supplier'
+			],
+			'pf.fk_paiement' => ['rule' => 'zeroifnull'],
+			'pfff.fk_paiement' => ['rule' => 'zeroifnull'],
+		];
 	}
 
 

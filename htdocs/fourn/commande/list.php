@@ -682,7 +682,7 @@ if ($resql)
 	if ($user->rights->fournisseur->facture->creer) $arrayofmassactions['createbills'] = $langs->trans("CreateInvoiceForThisSupplier");
 	if ($user->rights->fournisseur->commande->supprimer) $arrayofmassactions['predelete'] = '<span class="fa fa-trash paddingrightonly"></span>'.$langs->trans("Delete");
 	if (in_array($massaction, array('presend', 'predelete', 'createbills'))) $arrayofmassactions = array();
-	$massactionbutton = $form->selectMassAction('', $arrayofmassactions);
+	$massactionbutton = $form->selectMassAction('', $arrayofmassactions, 1);
 
 	$url = DOL_URL_ROOT.'/fourn/commande/card.php?action=create';
 	if (!empty($socid)) $url .= '&socid='.$socid;
