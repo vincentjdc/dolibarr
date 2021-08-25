@@ -433,6 +433,12 @@ if (!$user->rights->societe->client->voir && !$socid)	// Internal user with no p
 {
 	$sql .= ", ".MAIN_DB_PREFIX."societe_commerciaux as sc";
 }
+
+// Add joins from hooks
+$parameters = array();
+$reshook = $hookmanager->executeHooks('printFieldListFrom', $parameters); // Note that $action and $object may have been modified by hook
+$sql .= $hookmanager->resPrint;
+
 $sql .= " WHERE e.entity IN (".getEntity('reception').")";
 if (!$user->rights->societe->client->voir && !$socid)	// Internal user with no permission to see all
 {
