@@ -45,7 +45,7 @@ $receptionid = GETPOST('id', 'int');
 if ($user->socid) $socid = $user->socid;
 $result = restrictedArea($user, 'reception', $receptionid, '');
 
-$diroutputmassaction = $conf->reception->dir_output.'/temp/massgeneration/'.$user->id;
+//$diroutputmassaction = $conf->reception->dir_output.'/temp/massgeneration/'.$user->id;
 
 $search_ref_rcp = GETPOST("search_ref_rcp");
 $search_ref_liv = GETPOST('search_ref_liv');
@@ -150,6 +150,10 @@ if (GETPOST('button_removefilter_x', 'alpha') || GETPOST('button_removefilter.x'
 
 if (empty($reshook))
 {
+	$uploaddir = $conf->reception->dir_output.'/temp/massgeneration/'.$user->id;
+	$objectclass = 'Reception';
+	include DOL_DOCUMENT_ROOT.'/core/actions_massactions.inc.php';
+
 	if ($massaction == 'confirm_createbills') {
 		$receptions = GETPOST('toselect', 'array');
 		$createbills_onebythird = GETPOST('createbills_onebythird', 'int');
