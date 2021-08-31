@@ -252,9 +252,11 @@ if (empty($reshook)) {
 		$error = 0;
 
 		if (!GETPOST('label', $label_security_check)) {
-			setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('Label')), null, 'errors');
-			$action = "create";
-			$error++;
+			if (empty($conf->global->PRODUCT_GENERATE_REF_AFTER_FORM)) {
+				setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('Label')), null, 'errors');
+				$action = "create";
+				$error++;
+			}
 		}
 		if (empty($ref)) {
 			if (empty($conf->global->PRODUCT_GENERATE_REF_AFTER_FORM)) {
