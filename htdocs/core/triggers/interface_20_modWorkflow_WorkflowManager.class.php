@@ -192,7 +192,8 @@ class InterfaceWorkflowManager extends DolibarrTriggers
 		if ($action == 'BILL_SUPPLIER_VALIDATE') {
 			dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
 
-			// First classify billed the order to allow the proposal classify process
+			// Firstly, we set to purchase order to "Billed" if WORKFLOW_INVOICE_AMOUNT_CLASSIFY_BILLED_SUPPLIER_ORDER is set.
+			// After we will set proposals
 			if (((!empty($conf->fournisseur->enabled) && empty($conf->global->MAIN_USE_NEW_SUPPLIERMOD)) || !empty($conf->supplier_order->enabled) || !empty($conf->supplier_invoice->enabled)) && !empty($conf->global->WORKFLOW_INVOICE_AMOUNT_CLASSIFY_BILLED_SUPPLIER_ORDER)) {
 				$object->fetchObjectLinked('', 'order_supplier', $object->id, $object->element);
 				if (!empty($object->linkedObjects)) {
@@ -214,7 +215,7 @@ class InterfaceWorkflowManager extends DolibarrTriggers
 				}
 			}
 
-			// Second classify billed the proposal.
+			// Secondly, we set to linked Proposal to "Billed" if WORKFLOW_INVOICE_CLASSIFY_BILLED_SUPPLIER_PROPOSAL is set.
 			if (!empty($conf->supplier_proposal->enabled) && !empty($conf->global->WORKFLOW_INVOICE_CLASSIFY_BILLED_SUPPLIER_PROPOSAL)) {
 				$object->fetchObjectLinked('', 'supplier_proposal', $object->id, $object->element);
 				if (!empty($object->linkedObjects)) {
@@ -236,18 +237,20 @@ class InterfaceWorkflowManager extends DolibarrTriggers
 				}
 			}
 
-			 // classify billed reception
+			// Then set reception to "Billed" if WORKFLOW_BILL_ON_RECEPTION is set
 			if (!empty($conf->reception->enabled) && !empty($conf->global->WORKFLOW_BILL_ON_RECEPTION)) {
 				$object->fetchObjectLinked('', 'reception', $object->id, $object->element);
 				if (!empty($object->linkedObjects)) {
 					$totalonlinkedelements = 0;
 					foreach ($object->linkedObjects['reception'] as $element) {
-						if ($element->statut == Reception::STATUS_VALIDATED) $totalonlinkedelements += $element->total_ht;
+						if ($element->statut == Reception::STATUS_VALIDATED) {
+							$totalonlinkedelements += $element->total_ht;
+						}
 					}
-					dol_syslog("Amount of linked proposals = ".$totalonlinkedelements.", of invoice = ".$object->total_ht.", egality is ".($totalonlinkedelements == $object->total_ht), LOG_DEBUG);
+					dol_syslog("Amount of linked reception = ".$totalonlinkedelements.", of invoice = ".$object->total_ht.", egality is ".($totalonlinkedelements == $object->total_ht), LOG_DEBUG);
 					if ($totalonlinkedelements == $object->total_ht) {
 						foreach ($object->linkedObjects['reception'] as $element) {
-							$ret = $element->set_billed();
+							$ret = $element->setBilled();
 							if ($ret < 0) {
 								return $ret;
 							}
