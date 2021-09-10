@@ -2158,7 +2158,7 @@ class DolibarrModules // Can not be abstract, because we need to instantiate it 
 				$sql .= " VALUES (";
 				$sql .= "'".$this->db->escape($this->db->encrypt($this->const_name."_".strtoupper($key)))."'";
 				$sql .= ", 'chaine'";
-				$sql .= ", '".$this->db->escape($this->db->encrypt($newvalue))."'";
+				$sql .= ", '".$this->db->encrypt($newvalue)."'";
 				$sql .= ", null";
 				$sql .= ", '0'";
 				$sql .= ", ".((int) $entity);
