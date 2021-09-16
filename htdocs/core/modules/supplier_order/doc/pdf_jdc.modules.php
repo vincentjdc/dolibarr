@@ -841,10 +841,10 @@ class pdf_jdc extends ModelePDFSuppliersOrders
                         $pdf->SetFont('', '', $default_font_size - 2);
                         $pdf->SetXY($posxval, $posy);
 
-			$delivery_contact = $outputlangs->transnoentities("Contacter %s\npar téléphone au %s",
+			$delivery_contact = $outputlangs->transnoentities(sprintf("Contacter %s\npar téléphone au %s",
 				$object->array_options['options_delivery_contact'],
 				$object->array_options['options_delivery_contact_phone']
-			);
+			));
                         /*$delivery_contact = $outputlangs->convToOutputCharset(sprintf(
 				$outputlangs->transnoentities("ContactByPhone"),
 				$outputlangs->convToOutputCharset($object->array_options['options_delivery_contact']),
@@ -1192,7 +1192,7 @@ class pdf_jdc extends ModelePDFSuppliersOrders
 	 */
 	protected function _pagehead(&$pdf, $object, $showaddress, $outputlangs)
 	{
-		global $langs, $conf, $mysoc;
+		global $langs, $conf, $mysoc, $user;
 
 		// Load translation files required by the page
 		$outputlangs->loadLangs(array("main", "orders", "companies", "bills", "sendings"));
@@ -1368,6 +1368,24 @@ class pdf_jdc extends ModelePDFSuppliersOrders
 			$pdf->MultiCell(80, 4, $carac_emetteur, 0, 'L');
 			$posy = $pdf->getY();
 
+			$userExtrafields = new ExtraFields($this->db);
+			$userExtralabels=$userExtrafields->fetch_name_optionals_label($user->table_element);
+
+			$user->fetch_optionals($user->rowid,$userExtralabels);
+			$phoneNumber = $outputlangs->convToOutputCharset($user->array_options['options_entity_phone_number']);
+			$email = $outputlangs->convToOutputCharset($user->array_options['options_entity_email']);
+
+
+			$posy += 2;
+			$pdf->SetXY($posx + 2, $posy);
+			$pdf->MultiCell(80, 4, $outputlangs->transnoentities("PhoneShort").": ".$phoneNumber, 0, "L");
+			$posy = $pdf->getY();
+
+			$pdf->SetXY($posx + 2, $posy);
+			$pdf->MultiCell(80, 4, $outputlangs->transnoentities("Email").": ".$email, 0, "L");
+			$posy = $pdf->getY();
+
+			// Show send VAT
 			$pdf->SetXY($posx + 2, $posy);
 			$pdf->SetTextColor(255, 0, 0);
 			$pdf->MultiCell(80, 4, $outputlangs->transnoentities("VAT").": ".$this->emetteur->tva_intra, 0, "L");
