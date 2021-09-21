@@ -1371,10 +1371,9 @@ class pdf_jdc extends ModelePDFSuppliersOrders
 			$userExtrafields = new ExtraFields($this->db);
 			$userExtralabels=$userExtrafields->fetch_name_optionals_label($user->table_element);
 
-			$user->fetch_optionals($user->rowid,$userExtralabels);
+			$user->fetch_optionals($user->user_author_id,$userExtralabels);
 			$phoneNumber = $outputlangs->convToOutputCharset($user->array_options['options_entity_phone_number']);
 			$email = $outputlangs->convToOutputCharset($user->array_options['options_entity_email']);
-
 
 			$posy += 2;
 			$pdf->SetXY($posx + 2, $posy);
