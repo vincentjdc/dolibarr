@@ -333,8 +333,6 @@ if (empty($reshook)) {
 				}*/
 			}
 
-			die('ici');
-
 			$db->begin();
 
 			$id = $object->create($user);
@@ -493,8 +491,6 @@ if (empty($reshook)) {
 						}
 					}
 				}
-
-				//die('ici');
 
 				// Fill array 'array_options' with data from add form
 				$ret = $extrafields->setOptionalsFromPost(null, $object);

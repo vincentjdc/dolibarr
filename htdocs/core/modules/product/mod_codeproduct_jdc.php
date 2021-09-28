@@ -139,7 +139,9 @@ class mod_codeproduct_jdc extends ModeleProductCode
                 //dol_syslog('family : '.$familyRef, LOG_DEBUG);
                 //dol_syslog('options : '.print_r($objproduct->array_options, 1), LOG_DEBUG);
 
-                $start = 9;
+                //$start = 9;
+                $start = strlen($familyRef)+2; // +1 for the additional "-" +1 because we need to start the next char
+
                 $sql = "SELECT MAX(CAST(SUBSTRING(ref FROM ".$start.") AS SIGNED)) as max";
                 $sql .= " FROM ".MAIN_DB_PREFIX."product";
                 $sql .= " WHERE ref LIKE '".$db->escape($familyRef)."-%'";

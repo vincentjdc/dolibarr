@@ -1394,6 +1394,7 @@ class pdf_jdc extends ModelePDFSuppliersOrders
 			// If CUSTOMER contact defined on order, we use it. Note: Even if this is a supplier object, the code for external contat that follow order is 'CUSTOMER'
 			$usecontact = false;
 			$arrayidcontact = $object->getIdContact('external', 'CUSTOMER');
+			dol_syslog('VINCENT : contacts '.print_r($arrayidcontact, 1), LOG_DEBUG);
 			if (count($arrayidcontact) > 0)
 			{
 				$usecontact = true;
