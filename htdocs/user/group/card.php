@@ -403,7 +403,6 @@ if ($action == 'create') {
 			}
 
 			// Other form for add user to group
-			echo '==>'.$caneditperms;
 			$parameters = array('caneditperms' => $caneditperms, 'exclude' => $exclude);
 			$reshook = $hookmanager->executeHooks('formAddUserToGroup', $parameters, $object, $action); // Note that $action and $object may have been modified by hook
 			print $hookmanager->resPrint;
