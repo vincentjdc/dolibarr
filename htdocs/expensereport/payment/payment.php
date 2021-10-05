@@ -290,7 +290,7 @@ if ($action == 'create' || empty($action)) {
 		print '<td class="right">'.price($sumpaid)."</td>";
 		print '<td class="right">'.price($objp->total_ttc - $sumpaid)."</td>";
 		print '<td class="center">';
-		if ($sumpaid < $objp->total_ttc) {
+		if ($conf->global->EXPENSEREPORT_ALLOW_NEGATIVE_REMAIN_TO_PAY || $sumpaid < $objp->total_ttc) {
 			$namef = "amount_".$objp->id;
 			$nameRemain = "remain_".$objp->id; // autofill remainder amount
 			if (!empty($conf->use_javascript_ajax)) { // autofill remainder amount
