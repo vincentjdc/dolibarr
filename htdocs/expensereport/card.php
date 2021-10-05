@@ -2646,7 +2646,7 @@ if ($action != 'create' && $action != 'edit') {
 	}
 
 	// If bank module is used
-	if ($user->rights->expensereport->to_paid && !empty($conf->banque->enabled) && $object->status == ExpenseReport::STATUS_APPROVED) {
+	if ($user->rights->expensereport->to_paid && !empty($conf->banque->enabled) && ($object->status == ExpenseReport::STATUS_APPROVED || $conf->global->EXPENSEREPORT_ALWAYS_ALLOW_PAYMENT)) {
 		// Pay
 		if ($remaintopay == 0) {
 			print '<div class="inline-block divButAction"><span class="butActionRefused classfortooltip" title="'.$langs->trans("DisabledBecauseRemainderToPayIsZero").'">'.$langs->trans('DoPayment').'</span></div>';
