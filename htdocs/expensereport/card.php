@@ -2160,7 +2160,8 @@ if ($action == 'create') {
 											// If the preview file is found
 											if (file_exists($fileimage)) {
 												$thumbshown = 1;
-												print '<img height="'.$heightforphotref.'" class="photo photowithmargin photowithborder" src="'.DOL_URL_ROOT.'/viewimage.php?modulepart=apercu'.$modulepart.'&amp;file='.urlencode($relativepathimage).'">';
+												$urlforhref = getAdvancedPreviewUrl($modulepart, $relativepathimage, 1, '&entity='.(!empty($object->entity) ? $object->entity : $conf->entity));
+												print '<a href="'.$urlforhref['url'].'" class="'.$urlforhref['css'].'" target="'.$urlforhref['target'].'" mime="'.$urlforhref['mime'].'"><img height="'.$heightforphotref.'" class="photo photowithmargin photowithborder" src="'.DOL_URL_ROOT.'/viewimage.php?modulepart=apercu'.$modulepart.'&amp;file='.urlencode($relativepathimage).'"></a>';
 											}
 										}
 									}
