@@ -215,11 +215,8 @@ if (empty($reshook)) {
 		$result = $object->fetch($id);
 		$result = $object->delete($user);
 		if ($result >= 0) {
-			$result = $this->call_trigger('EXPENSE_REPORT_DELETE', $user);
-			if ($result > 0) {
-				header("Location: index.php");
-				exit;
-			}
+			header("Location: index.php");
+			exit;
 		} else {
 			setEventMessages($object->error, $object->errors, 'errors');
 		}
@@ -283,11 +280,6 @@ if (empty($reshook)) {
 				$error++;
 			}
 
-			$result = $this->call_trigger('EXPENSE_REPORT_ADD', $user);
-			if ($result < 0) {
-				$error++;
-			}
-
 			if (!$error) {
 				$db->commit();
 				Header("Location: ".$_SERVER["PHP_SELF"]."?id=".$id);
@@ -318,13 +310,8 @@ if (empty($reshook)) {
 
 		$result = $object->update($user);
 		if ($result > 0) {
-
-			$result = $this->call_trigger('EXPENSE_REPORT_UPDATE', $user);
-			if ($result > 0) {
-				header("Location: ".$_SERVER["PHP_SELF"]."?id=".GETPOST('id', 'int'));
-				exit;
-			}
-
+			header("Location: ".$_SERVER["PHP_SELF"]."?id=".GETPOST('id', 'int'));
+			exit;
 		} else {
 			setEventMessages($object->error, $object->errors, 'errors');
 		}
@@ -389,13 +376,6 @@ if (empty($reshook)) {
 		}
 
 		if (!$error && $result > 0 && $object->fk_user_validator > 0) {
-			$result = $this->call_trigger('EXPENSE_REPORT_VALIDATE', $user);
-			if ($result < 0) {
-				$error++;
-			}
-		}
-
-		if ($error) {
 			$langs->load("mails");
 
 			// TO
@@ -610,10 +590,7 @@ if (empty($reshook)) {
 
 				$object->generateDocument($model, $outputlangs, $hidedetails, $hidedesc, $hideref);
 			}
-
-			$result = $this->call_trigger('EXPENSE_REPORT_APPROVE', $user);
 		}
-
 
 		if ($result > 0) {
 			// Send mail
@@ -727,8 +704,6 @@ if (empty($reshook)) {
 
 				$object->generateDocument($model, $outputlangs, $hidedetails, $hidedesc, $hideref);
 			}
-
-			$result = $this->call_trigger('EXPENSE_REPORT_REFUSE', $user);
 		}
 
 		if ($result > 0) {
@@ -994,8 +969,6 @@ if (empty($reshook)) {
 
 				$object->generateDocument($model, $outputlangs, $hidedetails, $hidedesc, $hideref);
 			}
-
-			$result = $this->call_trigger('EXPENSE_REPORT_SET_UNPAID', $user);
 		}
 	}
 
@@ -1025,8 +998,6 @@ if (empty($reshook)) {
 
 				$object->generateDocument($model, $outputlangs, $hidedetails, $hidedesc, $hideref);
 			}
-
-			$result = $this->call_trigger('EXPENSE_REPORT_SET_PAID', $user);
 		}
 
 		if ($result > 0) {
