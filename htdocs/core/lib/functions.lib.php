@@ -8728,6 +8728,7 @@ function printCommonFooter($zone = 'private')
 						if ($qualified) {
 							foreach ($defval as $paramkey => $paramval) {
 								// Add property 'required' on input
+								print 'jQuery("[name=\''.$paramkey.'\']").parent(\'td\').prev().addClass(\'fieldrequired\');'."\n";
 								print 'jQuery("input[name=\''.$paramkey.'\']").prop(\'required\',true);'."\n";
 								print 'jQuery("textarea[name=\''.$paramkey.'\']").prop(\'required\',true);'."\n";
 								print '// required on a select works only if key is "", so we add the required attributes but also we reset the key -1 or 0 to an empty string'."\n";
