@@ -31,7 +31,7 @@ require_once DOL_DOCUMENT_ROOT.'/bookmarks/class/bookmark.class.php';
 $langs->loadLangs(array('bookmarks', 'other'));
 
 // Security check
-if (!$user->rights->bookmark->lire) {
+if (empty($user->rights->bookmark->lire)) {
 	restrictedArea($user, 'bookmarks');
 }
 
@@ -169,7 +169,11 @@ if ($action == 'create') {
 	// Target
 	print '<tr><td>'.$langs->trans("BehaviourOnClick").'</td><td>';
 	$liste = array(0=>$langs->trans("ReplaceWindow"), 1=>$langs->trans("OpenANewWindow"));
-	print $form->selectarray('target', $liste, GETPOSTISSET('target') ? GETPOST('target', 'int') : 1, 0, 0, 0, '', 0, 0, 0, '', 'maxwidth300');
+	$defaulttarget = 1;
+	if ($url && !preg_match('/^http/i', $url)) {
+		$defaulttarget = 0;
+	}
+	print $form->selectarray('target', $liste, GETPOSTISSET('target') ? GETPOST('target', 'int') : $defaulttarget, 0, 0, 0, '', 0, 0, 0, '', 'maxwidth300');
 	print '</td><td class="hideonsmartphone"><span class="opacitymedium">'.$langs->trans("ChooseIfANewWindowMustBeOpenedOnClickOnBookmark").'</span></td></tr>';
 
 	// Owner
