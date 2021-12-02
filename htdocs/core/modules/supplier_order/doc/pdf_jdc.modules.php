@@ -165,7 +165,7 @@ class pdf_jdc extends ModelePDFSuppliersOrders
 		if (!empty($conf->global->PRODUCT_USE_UNITS))
 		{
 			$this->posxtva = 95;
-			$this->posxup = 114;
+			$this->posxup = 108;
 			$this->posxqty = 132;
 			$this->posxunit = 147;
 		} else {
