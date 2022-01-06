@@ -2080,7 +2080,7 @@ class Form
 			if ($num) {
 				// Enhance with select2
 				include_once DOL_DOCUMENT_ROOT.'/core/lib/ajax.lib.php';
-				$out .= ajax_combobox($htmlname);
+				$out = ajax_combobox($htmlname).$out;
 			}
 		} else {
 			dol_print_error($this->db);
@@ -2173,7 +2173,7 @@ class Form
 		// Method with no ajax
 		if ($action != 'view') {
 			$out .= '<input type="hidden" class="removedassignedhidden" name="removedassigned" value="">';
-			$out .= '<script type="text/javascript" language="javascript">jQuery(document).ready(function () {';
+			$out .= '<script type="text/javascript">jQuery(document).ready(function () {';
 			$out .= 'jQuery(".removedassigned").click(function() { jQuery(".removedassignedhidden").val(jQuery(this).val()); });';
 			$out .= 'jQuery(".assignedtouser").change(function() { console.log(jQuery(".assignedtouser option:selected").val());';
 			$out .= ' if (jQuery(".assignedtouser option:selected").val() > 0) { jQuery("#'.$action.'assignedtouser").attr("disabled", false); }';
@@ -2347,7 +2347,7 @@ class Form
 					$out .= img_picto($langs->trans("Search"), 'search');
 				}
 			}
-			$out .= '<input type="text" class="minwidth100" name="search_'.$htmlname.'" id="search_'.$htmlname.'" value="'.$selected_input_value.'"'.$placeholder.' '.(!empty($conf->global->PRODUCT_SEARCH_AUTOFOCUS) ? 'autofocus' : '').' />';
+			$out .= '<input type="text" class="minwidth100'.($morecss ? ' '.$morecss : '').'" name="search_'.$htmlname.'" id="search_'.$htmlname.'" value="'.$selected_input_value.'"'.$placeholder.' '.(!empty($conf->global->PRODUCT_SEARCH_AUTOFOCUS) ? 'autofocus' : '').' />';
 			if ($hidelabel == 3) {
 				$out .= img_picto($langs->trans("Search"), 'search');
 			}
@@ -4868,7 +4868,7 @@ class Form
 			$more .= $moreonecolumn;
 		}
 
-		// JQUI method dialog is broken with jmobile, we use standard HTML.
+		// JQUERY method dialog is broken with smartphone, we use standard HTML.
 		// Note: When using dol_use_jmobile or no js, you must also check code for button use a GET url with action=xxx and check that you also output the confirm code when action=xxx
 		// See page product/card.php for example
 		if (!empty($conf->dol_use_jmobile)) {
@@ -5042,7 +5042,7 @@ class Form
 			}
 			$formconfirm .= '<br>';
 
-			if (empty($conf->use_javascript_ajax)) {
+			if (!empty($conf->use_javascript_ajax)) {
 				$formconfirm .= '<!-- code to disable button to avoid double clic -->';
 				$formconfirm .= '<script type="text/javascript">'."\n";
 				$formconfirm .= '
@@ -6544,7 +6544,7 @@ class Form
 			unset($TDurationTypes[$value]);
 		}
 
-		$retstring = '<select class="flat" id="select_'.$prefix.'type_duration" name="'.$prefix.'type_duration">';
+		$retstring = '<select class="flat minwidth75 maxwidth100" id="select_'.$prefix.'type_duration" name="'.$prefix.'type_duration">';
 		foreach ($TDurationTypes as $key => $typeduration) {
 			$retstring .= '<option value="'.$key.'"';
 			if ($key == $selected) {
@@ -7961,19 +7961,19 @@ class Form
 	/**
 	 *	Show a multiselect form from an array. WARNING: Use this only for short lists.
 	 *
-	 *	@param	string	$htmlname		Name of select
-	 *	@param	array	$array			Array with key+value
-	 *	@param	array	$selected		Array with key+value preselected
-	 *	@param	int		$key_in_label   1 to show key like in "[key] value"
-	 *	@param	int		$value_as_key   1 to use value as key
-	 *	@param  string	$morecss        Add more css style
-	 *	@param  int		$translate		Translate and encode value
-	 *  @param	int		$width			Force width of select box. May be used only when using jquery couch. Example: 250, 95%
-	 *  @param	string	$moreattrib		Add more options on select component. Example: 'disabled'
-	 *  @param	string	$elemtype		Type of element we show ('category', ...). Will execute a formating function on it. To use in readonly mode if js component support HTML formatting.
-	 *  @param	string	$placeholder	String to use as placeholder
-	 *  @param	int		$addjscombo		Add js combo
-	 *	@return	string					HTML multiselect string
+	 *	@param	string		$htmlname		Name of select
+	 *	@param	array		$array			Array with key+value
+	 *	@param	array		$selected		Array with key+value preselected
+	 *	@param	int			$key_in_label   1 to show key like in "[key] value"
+	 *	@param	int			$value_as_key   1 to use value as key
+	 *	@param  string		$morecss        Add more css style
+	 *	@param  int			$translate		Translate and encode value
+	 *  @param	int|string	$width			Force width of select box. May be used only when using jquery couch. Example: 250, '95%'
+	 *  @param	string		$moreattrib		Add more options on select component. Example: 'disabled'
+	 *  @param	string		$elemtype		Type of element we show ('category', ...). Will execute a formating function on it. To use in readonly mode if js component support HTML formatting.
+	 *  @param	string		$placeholder	String to use as placeholder
+	 *  @param	int			$addjscombo		Add js combo
+	 *	@return	string						HTML multiselect string
 	 *  @see selectarray(), selectArrayAjax(), selectArrayFilter()
 	 */
 	public static function multiselectarray($htmlname, $array, $selected = array(), $key_in_label = 0, $value_as_key = 0, $morecss = '', $translate = 0, $width = 0, $moreattrib = '', $elemtype = '', $placeholder = '', $addjscombo = -1)
@@ -8208,7 +8208,7 @@ class Form
 					$toprint[] = '<li class="select2-search-choice-dolibarr noborderoncategories"'.($c->color ? ' style="background: #'.$c->color.';"' : ' style="background: #bbb"').'>'.$way.'</li>';
 				}
 			}
-			return '<div class="select2-container-multi-dolibarr" style="width: 90%;"><ul class="select2-choices-dolibarr">'.implode(' ', $toprint).'</ul></div>';
+			return '<div class="select2-container-multi-dolibarr"><ul class="select2-choices-dolibarr">'.implode(' ', $toprint).'</ul></div>';
 		}
 
 		if ($rendermode == 0) {
@@ -8435,12 +8435,12 @@ class Form
 					'label'=>'LinkToContract',
 					'sql'=>"SELECT s.rowid as socid, s.nom as name, s.client, t.rowid, t.ref, t.ref_customer as ref_client, t.ref_supplier, SUM(td.total_ht) as total_ht FROM ".MAIN_DB_PREFIX."societe as s, ".MAIN_DB_PREFIX."contrat as t, ".MAIN_DB_PREFIX."contratdet as td WHERE t.fk_soc = s.rowid AND td.fk_contrat = t.rowid AND t.fk_soc IN (".$this->db->sanitize($listofidcompanytoscan).') AND t.entity IN ('.getEntity('contract').') GROUP BY s.rowid, s.nom, s.client, t.rowid, t.ref, t.ref_customer, t.ref_supplier'
 				),
-				'fichinter'=>array('enabled'=>$conf->ficheinter->enabled, 'perms'=>1, 'label'=>'LinkToIntervention', 'sql'=>"SELECT s.rowid as socid, s.nom as name, s.client, t.rowid, t.ref FROM ".MAIN_DB_PREFIX."societe as s, ".MAIN_DB_PREFIX."fichinter as t WHERE t.fk_soc = s.rowid AND t.fk_soc IN (".$this->db->sanitize($listofidcompanytoscan).') AND t.entity IN ('.getEntity('intervention').')'),
+				'fichinter'=>array('enabled'=>!empty($conf->ficheinter->enabled) ? $conf->ficheinter->enabled : 0, 'perms'=>1, 'label'=>'LinkToIntervention', 'sql'=>"SELECT s.rowid as socid, s.nom as name, s.client, t.rowid, t.ref FROM ".MAIN_DB_PREFIX."societe as s, ".MAIN_DB_PREFIX."fichinter as t WHERE t.fk_soc = s.rowid AND t.fk_soc IN (".$this->db->sanitize($listofidcompanytoscan).') AND t.entity IN ('.getEntity('intervention').')'),
 				'supplier_proposal'=>array('enabled'=>$conf->supplier_proposal->enabled, 'perms'=>1, 'label'=>'LinkToSupplierProposal', 'sql'=>"SELECT s.rowid as socid, s.nom as name, s.client, t.rowid, t.ref, '' as ref_supplier, t.total_ht FROM ".MAIN_DB_PREFIX."societe as s, ".MAIN_DB_PREFIX."supplier_proposal as t WHERE t.fk_soc = s.rowid AND t.fk_soc IN (".$this->db->sanitize($listofidcompanytoscan).') AND t.entity IN ('.getEntity('supplier_proposal').')'),
 				'order_supplier'=>array('enabled'=>$conf->supplier_order->enabled, 'perms'=>1, 'label'=>'LinkToSupplierOrder', 'sql'=>"SELECT s.rowid as socid, s.nom as name, s.client, t.rowid, t.ref, t.ref_supplier, t.total_ht FROM ".MAIN_DB_PREFIX."societe as s, ".MAIN_DB_PREFIX."commande_fournisseur as t WHERE t.fk_soc = s.rowid AND t.fk_soc IN (".$this->db->sanitize($listofidcompanytoscan).') AND t.entity IN ('.getEntity('commande_fournisseur').')'),
 				'invoice_supplier'=>array('enabled'=>$conf->supplier_invoice->enabled, 'perms'=>1, 'label'=>'LinkToSupplierInvoice', 'sql'=>"SELECT s.rowid as socid, s.nom as name, s.client, t.rowid, t.ref, t.ref_supplier, t.total_ht FROM ".MAIN_DB_PREFIX."societe as s, ".MAIN_DB_PREFIX."facture_fourn as t WHERE t.fk_soc = s.rowid AND t.fk_soc IN (".$this->db->sanitize($listofidcompanytoscan).') AND t.entity IN ('.getEntity('facture_fourn').')'),
 				'ticket'=>array('enabled'=>$conf->ticket->enabled, 'perms'=>1, 'label'=>'LinkToTicket', 'sql'=>"SELECT s.rowid as socid, s.nom as name, s.client, t.rowid, t.ref, t.track_id, '0' as total_ht FROM ".MAIN_DB_PREFIX."societe as s, ".MAIN_DB_PREFIX."ticket as t WHERE t.fk_soc = s.rowid AND t.fk_soc IN (".$this->db->sanitize($listofidcompanytoscan).') AND t.entity IN ('.getEntity('ticket').')'),
-				'mo'=>array('enabled'=>$conf->mrp->enabled, 'perms'=>1, 'label'=>'LinkToMO', 'sql'=>"SELECT s.rowid as socid, s.nom as name, s.client, t.rowid, t.ref, t.rowid, '0' as total_ht FROM ".MAIN_DB_PREFIX."societe as s INNER JOIN ".MAIN_DB_PREFIX."mrp_mo as t ON t.fk_soc = s.rowid  WHERE  t.fk_soc IN (".$this->db->sanitize($listofidcompanytoscan).') AND t.entity IN ('.getEntity('mo').')')
+				'mo'=>array('enabled'=>$conf->mrp->enabled, 'perms'=>1, 'label'=>'LinkToMo', 'sql'=>"SELECT s.rowid as socid, s.nom as name, s.client, t.rowid, t.ref, t.rowid, '0' as total_ht FROM ".MAIN_DB_PREFIX."societe as s INNER JOIN ".MAIN_DB_PREFIX."mrp_mo as t ON t.fk_soc = s.rowid  WHERE  t.fk_soc IN (".$this->db->sanitize($listofidcompanytoscan).') AND t.entity IN ('.getEntity('mo').')')
 			);
 		}
 
@@ -9646,9 +9646,10 @@ class Form
 	 * @param	array		$arrayofcriterias			          Array of available search criterias. Example: array($object->element => $object->fields, 'otherfamily' => otherarrayoffields, ...)
 	 * @param	array		$search_component_params	          Array of selected search criterias
 	 * @param   array       $arrayofinputfieldsalreadyoutput      Array of input fields already inform. The component will not generate a hidden input field if it is in this list.
+	 * @param	string		$search_component_params_hidden		  String with $search_component_params criterias
 	 * @return	string									          HTML component for advanced search
 	 */
-	public function searchComponent($arrayofcriterias, $search_component_params, $arrayofinputfieldsalreadyoutput = array())
+	public function searchComponent($arrayofcriterias, $search_component_params, $arrayofinputfieldsalreadyoutput = array(), $search_component_params_hidden = '')
 	{
 		global $langs;
 
@@ -9666,7 +9667,12 @@ class Form
 
 		$ret .= '<div class="search_component inline-block valignmiddle">'.$texttoshow.'</div>';
 		$ret .= '</div>';
-		$ret .= '<input type="hidden" name="search_component_params_hidden" class="search_component_params_hidden" value="'.GETPOST("search_component_params_hidden").'">';
+		$ret .= "<!-- Syntax of Generic filter string: t.ref:like:'SO-%', t.date_creation:<:'20160101', t.date_creation:<:'2016-01-01 12:30:00', t.nature:is:NULL, t.field2:isnot:NULL -->\n";
+		if (GETPOST('show_search_component_params_hidden', 'int')) {
+			$ret .= '<input type="hidden" name="show_search_component_params_hidden" value="1">';
+		}
+		$ret .= '<input type="'.(GETPOST('show_search_component_params_hidden', 'int') ? 'text' : 'hidden').'" name="search_component_params_hidden" class="search_component_params_hidden marginleftonly" value="'.$search_component_params_hidden.'">';
+
 		// For compatibility with forms that show themself the search criteria in addition of this component, we output the fields
 		foreach ($arrayofcriterias as $criterias) {
 			foreach ($criterias as $criteriafamilykey => $criteriafamilyval) {

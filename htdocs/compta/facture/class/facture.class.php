@@ -147,14 +147,15 @@ class Facture extends CommonInvoice
 	//Check constants for types
 	public $type = self::TYPE_STANDARD;
 
-	//var $amount;
+	// Warning: Do not set default value into property defintion. it must stay null.
+	// For example to avoid to have substition done when object is generic and not yet defined.
 	public $remise_absolue;
 	public $remise_percent;
-	public $total_ht = 0;
-	public $total_tva = 0;
-	public $total_localtax1 = 0;
-	public $total_localtax2 = 0;
-	public $total_ttc = 0;
+	public $total_ht;
+	public $total_tva;
+	public $total_localtax1;
+	public $total_localtax2;
+	public $total_ttc;
 	public $revenuestamp;
 
 	/**
@@ -463,11 +464,17 @@ class Facture extends CommonInvoice
 		$this->status = self::STATUS_DRAFT;
 		$this->statut = self::STATUS_DRAFT;
 
-		// Multicurrency (test on $this->multicurrency_tx because we should take the default rate only if not using origin rate)
-		if (!empty($this->multicurrency_code) && empty($this->multicurrency_tx)) {
-			list($this->fk_multicurrency, $this->multicurrency_tx) = MultiCurrency::getIdAndTxFromCode($this->db, $this->multicurrency_code, $this->date);
+		if (!empty($this->multicurrency_code)) {
+			// Multicurrency (test on $this->multicurrency_tx because we should take the default rate of multicurrency_code only if not using original rate)
+			if (empty($this->multicurrency_tx)) {
+				// If original rate is not set, we take a default value from date
+				list($this->fk_multicurrency, $this->multicurrency_tx) = MultiCurrency::getIdAndTxFromCode($this->db, $this->multicurrency_code, $this->date);
+			} else {
+				// original rate multicurrency_tx and multicurrency_code are set, we use them
+				$this->fk_multicurrency = MultiCurrency::getIdFromCode($this->db, $this->multicurrency_code);
+			}
 		} else {
-			$this->fk_multicurrency = MultiCurrency::getIdFromCode($this->db, $this->multicurrency_code);
+			$this->fk_multicurrency = 0;
 		}
 		if (empty($this->fk_multicurrency)) {
 			$this->multicurrency_code = $conf->currency;
@@ -3140,7 +3147,7 @@ class Facture extends CommonInvoice
 		$fk_remise_except = '',
 		$price_base_type = 'HT',
 		$pu_ttc = 0,
-		$type = self::TYPE_STANDARD,
+		$type = 0,
 		$rang = -1,
 		$special_code = 0,
 		$origin = '',
@@ -5607,17 +5614,17 @@ class FactureLigne extends CommonInvoiceLine
 		$sql .= " description='".$this->db->escape($this->desc)."'";
 		$sql .= ", ref_ext='".$this->db->escape($this->ref_ext)."'";
 		$sql .= ", label=".(!empty($this->label) ? "'".$this->db->escape($this->label)."'" : "null");
-		$sql .= ", subprice=".price2num($this->subprice)."";
-		$sql .= ", remise_percent=".price2num($this->remise_percent)."";
+		$sql .= ", subprice=".price2num($this->subprice);
+		$sql .= ", remise_percent=".price2num($this->remise_percent);
 		if ($this->fk_remise_except) {
 			$sql .= ", fk_remise_except=".$this->fk_remise_except;
 		} else {
 			$sql .= ", fk_remise_except=null";
 		}
 		$sql .= ", vat_src_code = '".(empty($this->vat_src_code) ? '' : $this->db->escape($this->vat_src_code))."'";
-		$sql .= ", tva_tx=".price2num($this->tva_tx)."";
-		$sql .= ", localtax1_tx=".price2num($this->localtax1_tx)."";
-		$sql .= ", localtax2_tx=".price2num($this->localtax2_tx)."";
+		$sql .= ", tva_tx=".price2num($this->tva_tx);
+		$sql .= ", localtax1_tx=".price2num($this->localtax1_tx);
+		$sql .= ", localtax2_tx=".price2num($this->localtax2_tx);
 		$sql .= ", localtax1_type='".$this->db->escape($this->localtax1_type)."'";
 		$sql .= ", localtax2_type='".$this->db->escape($this->localtax2_type)."'";
 		$sql .= ", qty=".price2num($this->qty);
@@ -5639,15 +5646,15 @@ class FactureLigne extends CommonInvoiceLine
 		if (!empty($this->rang)) {
 			$sql .= ", rang=".((int) $this->rang);
 		}
-		$sql .= ", situation_percent=".$this->situation_percent;
-		$sql .= ", fk_unit=".(!$this->fk_unit ? 'NULL' : $this->fk_unit);
-		$sql .= ", fk_user_modif =".$user->id;
+		$sql .= ", situation_percent = ".((float) $this->situation_percent);
+		$sql .= ", fk_unit = ".(!$this->fk_unit ? 'NULL' : $this->fk_unit);
+		$sql .= ", fk_user_modif = ".((int) $user->id);
 
 		// Multicurrency
-		$sql .= ", multicurrency_subprice=".price2num($this->multicurrency_subprice)."";
-		$sql .= ", multicurrency_total_ht=".price2num($this->multicurrency_total_ht)."";
-		$sql .= ", multicurrency_total_tva=".price2num($this->multicurrency_total_tva)."";
-		$sql .= ", multicurrency_total_ttc=".price2num($this->multicurrency_total_ttc)."";
+		$sql .= ", multicurrency_subprice=".price2num($this->multicurrency_subprice);
+		$sql .= ", multicurrency_total_ht=".price2num($this->multicurrency_total_ht);
+		$sql .= ", multicurrency_total_tva=".price2num($this->multicurrency_total_tva);
+		$sql .= ", multicurrency_total_ttc=".price2num($this->multicurrency_total_ttc);
 
 		$sql .= " WHERE rowid = ".((int) $this->rowid);
 

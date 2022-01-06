@@ -2044,7 +2044,7 @@ if ($action == 'create') {
 		if (empty($conf->global->INVOICE_DISABLE_DEPOSIT)) {
 			print '<div class="tagtr listofinvoicetype"><div class="tagtd listofinvoicetype">';
 			$tmp='<input type="radio" id="radio_deposit" name="type" value="3"' . (GETPOST('type') == 3 ? ' checked' : '') . '> ';
-			print '<script type="text/javascript" language="javascript">
+			print '<script type="text/javascript">
 			jQuery(document).ready(function() {
     			jQuery("#typestandardinvoice, #valuestandardinvoice").click(function() {
     				jQuery("#radio_standard").prop("checked", true);
@@ -2126,7 +2126,7 @@ if ($action == 'create') {
 			$tmp='<input type="radio" name="type" id="radio_replacement" value="1"' . (GETPOST('type') == 1 ? ' checked' : '');
 			if (! $options) $tmp.=' disabled';
 			$tmp.='> ';
-			print '<script type="text/javascript" language="javascript">
+			print '<script type="text/javascript">
 			jQuery(document).ready(function() {
 				jQuery("#fac_replacement").change(function() {
 					jQuery("#radio_replacement").prop("checked", true);
@@ -2198,7 +2198,7 @@ if ($action == 'create') {
 				}
 				$tmp .= '> ';
 				// Show credit note options only if we checked credit note
-				print '<script type="text/javascript" language="javascript">
+				print '<script type="text/javascript">
    				jQuery(document).ready(function() {
    					if (! jQuery("#radio_creditnote").is(":checked"))
    					{
@@ -2472,7 +2472,10 @@ if ($action == 'create') {
 			$multicurrency_totalcreditnotes = $object->getSumCreditNotesUsed(1);
 			$multicurrency_totaldeposits = $object->getSumDepositsUsed(1);
 			$multicurrency_resteapayer = price2num($object->multicurrency_total_ttc - $multicurrency_totalpaye - $multicurrency_totalcreditnotes - $multicurrency_totaldeposits, 'MT');
-			$resteapayer = price2num($multicurrency_resteapayer / $object->multicurrency_tx, 'MT');
+			// Code to fix case of corrupted data
+			if ($resteapayer == 0 && $multicurrency_resteapayer != 0) {
+				$resteapayer = price2num($multicurrency_resteapayer / $object->multicurrency_tx, 'MT');
+			}
 		}
 
 		if ($object->paye) {
@@ -2612,11 +2615,11 @@ if ($action == 'create') {
 		}
 
 		// Confirmation set paid
-		if ($action == 'paid' && ($resteapayer <= 0 || (!empty($conf->global->SUPPLIER_INVOICE_CAN_ADD_PAYMENT_EVEN_IF_ALREADY_PAID) && $resteapayer == $object->total_ttc))) {
+		if ($action == 'paid' && ($resteapayer <= 0 || (!empty($conf->global->SUPPLIER_INVOICE_CAN_SET_PAID_EVEN_IF_PARTIALLY_PAID) && $resteapayer == $object->total_ttc))) {
 			$formconfirm = $form->formconfirm($_SERVER["PHP_SELF"].'?id='.$object->id, $langs->trans('ClassifyPaid'), $langs->trans('ConfirmClassifyPaidBill', $object->ref), 'confirm_paid', '', 0, 1);
 		}
 
-		if ($action == 'paid' && $resteapayer > 0 && (empty($conf->global->SUPPLIER_INVOICE_CAN_ADD_PAYMENT_EVEN_IF_ALREADY_PAID) || $resteapayer != $object->total_ttc)) {
+		if ($action == 'paid' && $resteapayer > 0 && (empty($conf->global->SUPPLIER_INVOICE_CAN_SET_PAID_EVEN_IF_PARTIALLY_PAID) || $resteapayer != $object->total_ttc)) {
 			$close = array();
 			// Code
 			$i = 0;
@@ -3550,16 +3553,16 @@ if ($action == 'create') {
 
 				// Classify paid
 				if ($object->statut == FactureFournisseur::STATUS_VALIDATED && $object->paye == 0 && (
-						($object->type != FactureFournisseur::TYPE_CREDIT_NOTE && $object->type != FactureFournisseur::TYPE_DEPOSIT && ($resteapayer <= 0 || (!empty($conf->global->SUPPLIER_INVOICE_CAN_ADD_PAYMENT_EVEN_IF_ALREADY_PAID) && $object->total_ttc == $resteapayer))) ||
+						($object->type != FactureFournisseur::TYPE_CREDIT_NOTE && $object->type != FactureFournisseur::TYPE_DEPOSIT && ($resteapayer <= 0 || (!empty($conf->global->SUPPLIER_INVOICE_CAN_SET_PAID_EVEN_IF_PARTIALLY_PAID) && $object->total_ttc == $resteapayer))) ||
 						($object->type == FactureFournisseur::TYPE_CREDIT_NOTE && $resteapayer >= 0) ||
-						($object->type == FactureFournisseur::TYPE_DEPOSIT && $object->total_ttc > 0 && ($resteapayer == 0 || (!empty($conf->global->SUPPLIER_INVOICE_CAN_ADD_PAYMENT_EVEN_IF_ALREADY_PAID) && $object->total_ttc == $resteapayer)))
+						($object->type == FactureFournisseur::TYPE_DEPOSIT && $object->total_ttc > 0 && ($resteapayer == 0 || (!empty($conf->global->SUPPLIER_INVOICE_CAN_SET_PAID_EVEN_IF_PARTIALLY_PAID) && $object->total_ttc == $resteapayer)))
 					)
 				) {
 					print '<a class="butAction'.($conf->use_javascript_ajax ? ' reposition' : '').'" href="'.$_SERVER["PHP_SELF"].'?id='.$object->id.'&amp;action=paid">'.$langs->trans('ClassifyPaid').'</a>';
 				}
 
 				// Classify 'closed not completely paid' (possible if validated and not yet filed paid)
-				if ($object->statut == FactureFournisseur::STATUS_VALIDATED && $object->paye == 0 && $resteapayer > 0 && (empty($conf->global->SUPPLIER_INVOICE_CAN_ADD_PAYMENT_EVEN_IF_ALREADY_PAID) || $object->total_ttc != $resteapayer)) {
+				if ($object->statut == FactureFournisseur::STATUS_VALIDATED && $object->paye == 0 && $resteapayer > 0 && (empty($conf->global->SUPPLIER_INVOICE_CAN_SET_PAID_EVEN_IF_PARTIALLY_PAID) || $object->total_ttc != $resteapayer)) {
 					if ($totalpaye > 0 || $totalcreditnotes > 0) {
 						// If one payment or one credit note was linked to this invoice
 						print '<a class="butAction'.($conf->use_javascript_ajax ? ' reposition' : '').'" href="'.$_SERVER['PHP_SELF'].'?id='.$object->id.'&amp;action=paid">'.$langs->trans('ClassifyPaidPartially').'</a>';
