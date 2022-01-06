@@ -112,9 +112,11 @@ class mod_facture_fournisseur_jdc extends ModeleNumRefSuppliersInvoices
 		$year4digits = strftime("%Y", $date);
 		$year2digits = strftime("%y", $date);
 
-		// Get the journal mask according to the entity and the type of document
-		$entityId = $object->entity;
-		$entity = new DaoMulticompany($db);
+
+		// Get the entity of the invoice
+		$entityId = $object->array_options['options_fk_jdc_entity'];
+
+		$entity = new JdcEntity($db);
 		$entity->fetch($entityId);
 
 		$journalAttribute = 'invoice_journal';
@@ -125,8 +127,8 @@ class mod_facture_fournisseur_jdc extends ModeleNumRefSuppliersInvoices
 			$journalMinAttribute = 'credit_note_journal_min_number';
 		}
 
-		$journalMask = $entity->array_options['options_' . $journalAttribute];
-		$journalMin = intval($entity->array_options['options_' . $journalMinAttribute]);
+		$journalMask = $entity->$journalAttribute;
+		$journalMin = intval($entity->$journalMinAttribute);
 
 		// Replace Year (2 and 4 digits)
 		$journalMask = preg_replace('/\{yy\}/', $year2digits, $journalMask);

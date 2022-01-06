@@ -35,6 +35,8 @@ require_once DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/functions2.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/pdf.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/extrafields.class.php';
+require_once DOL_DOCUMENT_ROOT.'/custom/jdc/class/jdcentity.class.php';
+require_once DOL_DOCUMENT_ROOT.'/core/class/ccountry.class.php';
 
 /**
  *	Class to generate the supplier orders with the muscadet model
@@ -221,6 +223,20 @@ class pdf_jdc extends ModelePDFSuppliersOrders
 		$outputlangs->loadLangs(array("main", "orders", "companies", "bills", "dict", "products"));
 
 		$nblines = count($object->lines);
+
+		$this->jdcEntity = new JdcEntity($this->db);
+		$this->jdcEntity->fetch($object->array_options['options_fk_jdc_entity']);
+
+
+		// Get source company
+		$this->emetteur = $this->jdcEntity; // $mysoc;
+		/*if (empty($this->emetteur->country_code)) {
+			$this->emetteur->country_code = substr($langs->defaultlang, -2); // By default, if was not defined
+		}*/
+
+		$country = new Ccountry($this->db);
+		$country->fetch($this->emetteur->country);
+		$this->emetteur->country_code = $country->code;
 
 		// Loop on each lines to detect if there is at least one image to show
 		$realpatharray = array();
@@ -1359,7 +1375,7 @@ class pdf_jdc extends ModelePDFSuppliersOrders
 			// Show sender name
 			$pdf->SetXY($posx + 2, $posy + 3);
 			$pdf->SetFont('', 'B', $default_font_size);
-			$pdf->MultiCell(80, 4, $outputlangs->convToOutputCharset($this->emetteur->name), 0, 'L');
+			$pdf->MultiCell(80, 4, $outputlangs->convToOutputCharset($this->jdcEntity->label), 0, 'L');
 			$posy = $pdf->getY();
 
 			// Show sender information
@@ -1394,12 +1410,13 @@ class pdf_jdc extends ModelePDFSuppliersOrders
 			// If CUSTOMER contact defined on order, we use it. Note: Even if this is a supplier object, the code for external contat that follow order is 'CUSTOMER'
 			$usecontact = false;
 			$arrayidcontact = $object->getIdContact('external', 'CUSTOMER');
-			dol_syslog('VINCENT : contacts '.print_r($arrayidcontact, 1), LOG_DEBUG);
+
 			if (count($arrayidcontact) > 0)
 			{
 				$usecontact = true;
 				$result = $object->fetch_contact($arrayidcontact[0]);
 			}
+
 
 			// Recipient name
 			if ($usecontact && ($object->contact->fk_soc != $object->thirdparty->id && (!isset($conf->global->MAIN_USE_COMPANY_NAME_OF_CONTACT) || !empty($conf->global->MAIN_USE_COMPANY_NAME_OF_CONTACT)))) {

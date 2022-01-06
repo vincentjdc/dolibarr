@@ -7890,9 +7890,9 @@ abstract class CommonObject
 
 				$out .= '<!-- /showOptionals --> '."\n";
 			}
+		} else {
+			$out .= $hookmanager->resPrint;
 		}
-
-		$out .= $hookmanager->resPrint;
 
 		return $out;
 	}
