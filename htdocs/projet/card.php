@@ -65,6 +65,30 @@ $hookmanager->initHooks(array('projectcard', 'globalcard'));
 $object = new Project($db);
 $extrafields = new ExtraFields($db);
 
+// Load object modProject
+$modele = empty($conf->global->PROJECT_ADDON) ? 'mod_project_simple' : $conf->global->PROJECT_ADDON;
+
+// Search template files
+$file = ''; $classname = ''; $filefound = 0;
+$dirmodels = array_merge(array('/'), (array) $conf->modules_parts['models']);
+foreach ($dirmodels as $reldir) {
+	$file = dol_buildpath($reldir."core/modules/project/".$modele.'.php', 0);
+	if (file_exists($file)) {
+		$filefound = 1;
+		$classname = $modele;
+		break;
+	}
+}
+
+if (!$filefound) {
+	setEventMessages('err', 'err', 'errors');
+} else {
+	dol_syslog($file, LOG_DEBUG);
+	dol_include_once($reldir."core/modules/project/".$modele.'.php');
+	$modProject = new $classname;
+}
+
+
 // Load object
 //include DOL_DOCUMENT_ROOT.'/core/actions_fetchobject.inc.php';  // Can't use generic include because when creating a project, ref is defined and we dont want error if fetch fails from ref.
 if ($id > 0 || !empty($ref)) {
@@ -145,8 +169,10 @@ if (empty($reshook)) {
 	if ($action == 'add' && $user->rights->projet->creer) {
 		$error = 0;
 		if (!GETPOST('ref')) {
-			setEventMessages($langs->trans("ErrorFieldRequired", $langs->transnoentities("Ref")), null, 'errors');
-			$error++;
+			if (empty($conf->global->PROJECT_GENERATE_REF_AFTER_FORM)) {
+				setEventMessages($langs->trans("ErrorFieldRequired", $langs->transnoentities("Ref")), null, 'errors');
+				$error++;
+			}
 		}
 		if (!GETPOST('title')) {
 			setEventMessages($langs->trans("ErrorFieldRequired", $langs->transnoentities("ProjectLabel")), null, 'errors');
@@ -192,6 +218,12 @@ if (empty($reshook)) {
 			$ret = $extrafields->setOptionalsFromPost(null, $object);
 			if ($ret < 0) {
 				$error++;
+			}
+
+			if (!$ref && !empty($conf->global->PROJECT_GENERATE_REF_AFTER_FORM)) {
+				// Generate ref...
+				$ref = $modProject->getNextValue($thirdparty, $object);
+				$object->ref = $ref;
 			}
 
 			$result = $object->create($user);
@@ -246,8 +278,10 @@ if (empty($reshook)) {
 		$error = 0;
 
 		if (empty($ref)) {
-			$error++;
-			setEventMessages($langs->trans("ErrorFieldRequired", $langs->transnoentities("Ref")), null, 'errors');
+			if (empty($conf->global->PROJECT_GENERATE_REF_AFTER_FORM)) {
+				$error++;
+				setEventMessages($langs->trans("ErrorFieldRequired", $langs->transnoentities("Ref")), null, 'errors');
+			}
 		}
 		if (!GETPOST("title")) {
 			$error++;
@@ -261,7 +295,9 @@ if (empty($reshook)) {
 
 			$old_start_date = $object->date_start;
 
-			$object->ref          = GETPOST('ref', 'alpha');
+			if (empty($conf->global->PROJECT_GENERATE_REF_AFTER_FORM)) {
+				$object->ref          = GETPOST('ref', 'alpha');
+			}
 			$object->title        = GETPOST('title', 'alphanohtml'); // Do not use 'alpha' here, we want field as it is
 			$object->statut       = GETPOST('status', 'int');
 			$object->socid        = GETPOST('socid', 'int');
@@ -509,25 +545,11 @@ if ($action == 'create' && $user->rights->projet->creer) {
 	print '<table class="border centpercent tableforfieldcreate">';
 
 	$defaultref = '';
-	$modele = empty($conf->global->PROJECT_ADDON) ? 'mod_project_simple' : $conf->global->PROJECT_ADDON;
-
-	// Search template files
-	$file = ''; $classname = ''; $filefound = 0;
-	$dirmodels = array_merge(array('/'), (array) $conf->modules_parts['models']);
-	foreach ($dirmodels as $reldir) {
-		$file = dol_buildpath($reldir."core/modules/project/".$modele.'.php', 0);
-		if (file_exists($file)) {
-			$filefound = 1;
-			$classname = $modele;
-			break;
-		}
-	}
 
 	if ($filefound) {
-		$result = dol_include_once($reldir."core/modules/project/".$modele.'.php');
-		$modProject = new $classname;
-
-		$defaultref = $modProject->getNextValue($thirdparty, $object);
+		if (empty($conf->global->PROJECT_GENERATE_REF_AFTER_FORM)) {
+			$defaultref = $modProject->getNextValue($thirdparty, $object);
+		}
 	}
 
 	if (is_numeric($defaultref) && $defaultref <= 0) {
@@ -536,9 +558,11 @@ if ($action == 'create' && $user->rights->projet->creer) {
 
 	// Ref
 	$suggestedref = (GETPOST("ref") ? GETPOST("ref") : $defaultref);
-	print '<tr><td class="titlefieldcreate"><span class="fieldrequired">'.$langs->trans("Ref").'</span></td><td class><input class="maxwidth150onsmartphone" type="text" name="ref" value="'.dol_escape_htmltag($suggestedref).'">';
-	print ' '.$form->textwithpicto('', $langs->trans("YouCanCompleteRef", $suggestedref));
-	print '</td></tr>';
+	if (empty($conf->global->PROJECT_GENERATE_REF_AFTER_FORM)) {
+		print '<tr><td class="titlefieldcreate"><span class="fieldrequired">'.$langs->trans("Ref").'</span></td><td class><input class="maxwidth150onsmartphone" type="text" name="ref" value="'.dol_escape_htmltag($suggestedref).'">';
+		print ' '.$form->textwithpicto('', $langs->trans("YouCanCompleteRef", $suggestedref));
+		print '</td></tr>';
+	}
 
 	// Label
 	print '<tr><td><span class="fieldrequired">'.$langs->trans("ProjectLabel").'</span></td><td><input class="width500 maxwidth150onsmartphone" type="text" name="title" value="'.dol_escape_htmltag(GETPOST("title", 'alphanohtml')).'" autofocus></td></tr>';
@@ -811,10 +835,12 @@ if ($action == 'create' && $user->rights->projet->creer) {
 
 		// Ref
 		$suggestedref = $object->ref;
-		print '<tr><td class="titlefield fieldrequired">'.$langs->trans("Ref").'</td>';
-		print '<td><input size="25" name="ref" value="'.$suggestedref.'">';
-		print ' '.$form->textwithpicto('', $langs->trans("YouCanCompleteRef", $suggestedref));
-		print '</td></tr>';
+		if (empty($conf->global->PROJECT_GENERATE_REF_AFTER_FORM)) {
+			print '<tr><td class="titlefield fieldrequired">'.$langs->trans("Ref").'</td>';
+			print '<td><input size="25" name="ref" value="'.$suggestedref.'">';
+			print ' '.$form->textwithpicto('', $langs->trans("YouCanCompleteRef", $suggestedref));
+			print '</td></tr>';
+		}
 
 		// Label
 		print '<tr><td class="fieldrequired">'.$langs->trans("ProjectLabel").'</td>';
