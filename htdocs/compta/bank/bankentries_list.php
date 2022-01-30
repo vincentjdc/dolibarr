@@ -107,8 +107,8 @@ if (empty($dateop)) {
 }
 
 $limit = GETPOST('limit', 'int') ?GETPOST('limit', 'int') : $conf->liste_limit;
-$sortfield = GETPOST("sortfield", 'alpha');
-$sortorder = GETPOST("sortorder", 'alpha');
+$sortfield = GETPOST('sortfield', 'aZ09comma');
+$sortorder = GETPOST('sortorder', 'aZ09comma');
 $page = GETPOSTISSET('pageplusone') ? (GETPOST('pageplusone') - 1) : GETPOST("page", 'int');
 $pageplusone = GETPOST("pageplusone", 'int');
 if ($pageplusone) {
@@ -1102,8 +1102,7 @@ if ($resql) {
 		print $form->selectyesno('search_conciliated', $search_conciliated, 1, false, 1, 1);
 		print '</td>';
 	}
-	print '<td class="liste_titre" align="middle">';
-	print '</td>';
+	// Actions and select
 	print '<td class="liste_titre" align="middle">';
 	$searchpicto = $form->showFilterAndCheckAddButtons($massactionbutton ? 1 : 0, 'checkforselect', 1);
 	print $searchpicto;
@@ -1160,7 +1159,7 @@ if ($resql) {
 	$parameters = array('arrayfields'=>$arrayfields, 'param'=>$param, 'sortfield'=>$sortfield, 'sortorder'=>$sortorder);
 	$reshook = $hookmanager->executeHooks('printFieldListTitle', $parameters); // Note that $action and $object may have been modified by hook
 	print $hookmanager->resPrint;
-	print_liste_field_titre('', $_SERVER["PHP_SELF"], "", '', '', 'class="right"', $sortfield, $sortorder, 'maxwidthsearch ');
+	// Actions and select
 	print_liste_field_titre($selectedfields, $_SERVER["PHP_SELF"], "", '', '', 'align="center"', $sortfield, $sortorder, 'maxwidthsearch ');
 	print "</tr>\n";
 
@@ -1279,7 +1278,7 @@ if ($resql) {
 							</script>';
 					print '</td>';
 				}
-				print '<td colspan="'.($tmpnbfieldafterbalance + 2).'">';
+				print '<td colspan="'.($tmpnbfieldafterbalance + 1).'">';
 				print '&nbsp;';
 				print '</td>';
 				print '</tr>';
@@ -1340,14 +1339,15 @@ if ($resql) {
 				$labeltoshow = $langs->trans($reg[1]);
 			} else {
 				if ($objp->label == '(payment_salary)') {
-					$labeltoshow = dol_trunc($langs->trans("SalaryPayment", 40));
+					$labeltoshow = $langs->trans("SalaryPayment");
 				} else {
 					$labeltoshow = dol_escape_htmltag($objp->label);
 					$titletoshow = $objp->label;
 				}
 			}
-			print '<td class="tdoverflowmax300"'.($titletoshow ? ' title="'.dol_escape_htmltag($titletoshow).'"' : '').'>';
-			print $labeltoshow;	// Already escaped
+
+
+			print '<td class="tdoverflowmax250"'.($titletoshow ? ' title="'.dol_escape_htmltag($titletoshow).'"' : '').'>';
 
 			// Add info about links after description
 			$cachebankaccount = array();
@@ -1356,70 +1356,70 @@ if ($resql) {
 				if ($links[$key]['type'] == 'withdraw') {
 					$banktransferstatic->id = $links[$key]['url_id'];
 					$banktransferstatic->ref = $links[$key]['label'];
-					print ' '.$banktransferstatic->getNomUrl(0);
+					print $banktransferstatic->getNomUrl(0).' ';
 				} elseif ($links[$key]['type'] == 'payment') {
 					$paymentstatic->id = $links[$key]['url_id'];
 					$paymentstatic->ref = $links[$key]['url_id']; // FIXME This is id, not ref of payment
 					$paymentstatic->date = $db->jdate($objp->do);
-					print ' '.$paymentstatic->getNomUrl(2);
+					print $paymentstatic->getNomUrl(2).' ';
 				} elseif ($links[$key]['type'] == 'payment_supplier') {
 					$paymentsupplierstatic->id = $links[$key]['url_id'];
 					$paymentsupplierstatic->ref = $links[$key]['url_id']; // FIXME This is id, not ref of payment
-					print ' '.$paymentsupplierstatic->getNomUrl(2);
+					print $paymentsupplierstatic->getNomUrl(2).' ';
 				} elseif ($links[$key]['type'] == 'payment_sc') {
 					$paymentscstatic->id = $links[$key]['url_id'];
 					$paymentscstatic->ref = $links[$key]['url_id'];
 					$paymentscstatic->label = $links[$key]['label'];
-					print ' '.$paymentscstatic->getNomUrl(2);
+					print $paymentscstatic->getNomUrl(2).' ';
 				} elseif ($links[$key]['type'] == 'payment_vat') {
 					$paymentvatstatic->id = $links[$key]['url_id'];
 					$paymentvatstatic->ref = $links[$key]['url_id'];
-					print ' '.$paymentvatstatic->getNomUrl(2);
+					print $paymentvatstatic->getNomUrl(2).' ';
 				} elseif ($links[$key]['type'] == 'payment_salary') {
 					$paymentsalstatic->id = $links[$key]['url_id'];
 					$paymentsalstatic->ref = $links[$key]['url_id'];
 					$paymentsalstatic->label = $links[$key]['label'];
-					print ' '.$paymentsalstatic->getNomUrl(2);
+					print $paymentsalstatic->getNomUrl(2).' ';
 				} elseif ($links[$key]['type'] == 'payment_loan') {
 					print '<a href="'.DOL_URL_ROOT.'/loan/payment/card.php?id='.$links[$key]['url_id'].'">';
 					print ' '.img_object($langs->trans('ShowPayment'), 'payment').' ';
-					print '</a>';
+					print '</a> ';
 				} elseif ($links[$key]['type'] == 'payment_donation') {
 					$paymentdonationstatic->id = $links[$key]['url_id'];
 					$paymentdonationstatic->ref = $links[$key]['url_id'];
-					print ' '.$paymentdonationstatic->getNomUrl(2);
+					print $paymentdonationstatic->getNomUrl(2).' ';
 				} elseif ($links[$key]['type'] == 'payment_expensereport') {
 					$paymentexpensereportstatic->id = $links[$key]['url_id'];
 					$paymentexpensereportstatic->ref = $links[$key]['url_id'];
-					print ' '.$paymentexpensereportstatic->getNomUrl(2);
+					print $paymentexpensereportstatic->getNomUrl(2).' ';
 				} elseif ($links[$key]['type'] == 'payment_various') {
 					$paymentvariousstatic->id = $links[$key]['url_id'];
 					$paymentvariousstatic->ref = $links[$key]['url_id'];
-					print ' '.$paymentvariousstatic->getNomUrl(2);
+					print $paymentvariousstatic->getNomUrl(2).' ';
 				} elseif ($links[$key]['type'] == 'banktransfert') {
 					// Do not show link to transfer since there is no transfer card (avoid confusion). Can already be accessed from transaction detail.
 					if ($objp->amount > 0) {
 						$banklinestatic->fetch($links[$key]['url_id']);
 						$bankstatic->id = $banklinestatic->fk_account;
 						$bankstatic->label = $banklinestatic->bank_account_ref;
-						print ' ('.$langs->trans("TransferFrom").' ';
+						print $langs->trans("TransferFrom").' ';
 						print $bankstatic->getNomUrl(1, 'transactions');
 						print ' '.$langs->trans("toward").' ';
 						$bankstatic->id = $objp->bankid;
 						$bankstatic->label = $objp->bankref;
 						print $bankstatic->getNomUrl(1, '');
-						print ')';
+						print ' - ';
 					} else {
 						$bankstatic->id = $objp->bankid;
 						$bankstatic->label = $objp->bankref;
-						print ' ('.$langs->trans("TransferFrom").' ';
+						print $langs->trans("TransferFrom").' ';
 						print $bankstatic->getNomUrl(1, '');
 						print ' '.$langs->trans("toward").' ';
 						$banklinestatic->fetch($links[$key]['url_id']);
 						$bankstatic->id = $banklinestatic->fk_account;
 						$bankstatic->label = $banklinestatic->bank_account_ref;
 						print $bankstatic->getNomUrl(1, 'transactions');
-						print ')';
+						print ' - ';
 					}
 					//var_dump($links);
 				} elseif ($links[$key]['type'] == 'company') {
@@ -1431,22 +1431,22 @@ if ($resql) {
 					// Information is already shown using the payment_salary link. No need of this link.
 				} else {
 					// Show link with label $links[$key]['label']
-					if (!empty($objp->label) && !empty($links[$key]['label'])) {
-						print ' - ';
-					}
 					print '<a href="'.$links[$key]['url'].$links[$key]['url_id'].'">';
 					if (preg_match('/^\((.*)\)$/i', $links[$key]['label'], $reg)) {
 						// Label generique car entre parentheses. On l'affiche en le traduisant
 						if ($reg[1] == 'paiement') {
 							$reg[1] = 'Payment';
 						}
-						print ' '.$langs->trans($reg[1]);
+						print $langs->trans($reg[1]);
 					} else {
-						print ' '.$links[$key]['label'];
+						print $links[$key]['label'];
 					}
-					print '</a>';
+					print '</a>'.($labeltoshow ? ' - ' : '');
 				}
 			}
+
+			print $labeltoshow;	// Already escaped
+
 			print '</td>';
 			if (!$i) {
 				$totalarray['nbfield']++;
@@ -1489,7 +1489,7 @@ if ($resql) {
 
 		// Payment type
 		if (!empty($arrayfields['type']['checked'])) {
-			print '<td align="center" class="nowrap">';
+			print '<td class="tdoverflowmax100 center">';
 			$labeltype = ($langs->trans("PaymentTypeShort".$objp->fk_type) != "PaymentTypeShort".$objp->fk_type) ? $langs->trans("PaymentTypeShort".$objp->fk_type) : $langs->getLabelFromKey($db, $objp->fk_type, 'c_paiement', 'code', 'libelle', '', 1);
 			if ($labeltype == 'SOLD') {
 				print '&nbsp;'; //$langs->trans("InitialBankBalance");
@@ -1515,9 +1515,9 @@ if ($resql) {
 			print '<td class="tdoverflowmax150">';
 
 			$companylinked_id = 0;
-				$userlinked_id = 0;
+			$userlinked_id = 0;
 
-				//payment line type to define user display and user or company linked
+			//payment line type to define user display and user or company linked
 			foreach ($links as $key => $value) {
 				if ($links[$key]['type'] == 'payment_sc') {
 					$type_link = 'payment_sc';
@@ -1664,7 +1664,7 @@ if ($resql) {
 			}
 		}
 
-		// Action edit/delete
+		// Action edit/delete and select
 		print '<td class="nowraponall" align="center">';
 		// Transaction reconciliated or edit link
 		if ($objp->conciliated && $bankaccount->canBeConciliated() > 0) {  // If line not conciliated and account can be conciliated
@@ -1692,19 +1692,14 @@ if ($resql) {
 				print '</a>';
 			}
 		}
-		print '</td>';
-		if (!$i) {
-			$totalarray['nbfield']++;
-		}
 
 		// Action column
-		print '<td class="nowrap" align="center">';
 		if ($massactionbutton || $massaction) {   // If we are in select mode (massactionbutton defined) or if we have already selected and sent an action ($massaction) defined
 			$selected = 0;
 			if (in_array($obj->rowid, $arrayofselected)) {
 				$selected = 1;
 			}
-			print '<input id="cb'.$obj->rowid.'" class="flat checkforselect" type="checkbox" name="toselect[]" value="'.$obj->rowid.'"'.($selected ? ' checked="checked"' : '').'>';
+			print '<input id="cb'.$obj->rowid.'" class="flat checkforselect marginleftonly" type="checkbox" name="toselect[]" value="'.$obj->rowid.'"'.($selected ? ' checked="checked"' : '').'>';
 		}
 		print '</td>';
 		if (!$i) {
