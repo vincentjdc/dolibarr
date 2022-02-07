@@ -23,8 +23,8 @@
  *	\ingroup    facture
  *	\brief      File containing class for numbering module Mars
  */
-require_once DOL_DOCUMENT_ROOT.'/core/modules/facture/modules_facture.php';
-require_once DOL_DOCUMENT_ROOT.'/custom/jdc/class/jdcentity.class.php';
+require_once DOL_DOCUMENT_ROOT . '/core/modules/facture/modules_facture.php';
+require_once DOL_DOCUMENT_ROOT . '/custom/jdc/class/jdcentity.class.php';
 
 /**
  * 	Class to manage invoice numbering rules Mars
@@ -132,31 +132,35 @@ class mod_facture_jdc extends ModeleNumRefFactures
 
 		$start = strlen($startStr) + 1;
 
-		$sql = "SELECT MAX(CAST(SUBSTRING(ref FROM ".$start.") AS SIGNED)) as max";
-		$sql .= " FROM ".MAIN_DB_PREFIX."facture";
+		$sql = "SELECT MAX(CAST(SUBSTRING(ref FROM " . $start . ") AS SIGNED)) as max";
+		$sql .= " FROM " . MAIN_DB_PREFIX . "facture";
 		$sql .= " WHERE (";
-		for($i = $startNumber; $i <= $stopNumber; $i++) {
+		for ($i = $startNumber; $i <= $stopNumber; $i++) {
 			if ($i > $startNumber) {
 				$sql .= ' OR ';
 			}
-			$sql .= "ref LIKE '".$db->escape($prefix).$year.$i."%'";
+			$sql .= "ref LIKE '" . $db->escape($prefix) . $year . $i . "%'";
 		}
 		$sql .= ")";
 
-		dol_syslog('VINCENT : '.$sql, LOG_DEBUG);
+		dol_syslog('VINCENT : ' . $sql, LOG_DEBUG);
 
 		$resql = $db->query($sql);
-		if ($resql)
-		{
+		if ($resql) {
 			$obj = $db->fetch_object($resql);
-			if ($obj) $max = intval($obj->max);
-			else $max = 0;
+			if ($obj) {
+				if ($obj->max !== null) {
+					$max = intval($obj->max);
+				} else {
+					$max = $startNumber * 1000;
+				}
+			} else $max = $startNumber * 1000;
 		}
 
-		if ($max >= (pow(10, 3) - 1)) $num = $max + 1; // If counter > 9999, we do not format on 4 chars, we take number as it is
-		else $num = sprintf("%03s", $max + 1);
+		if ($max >= (pow(10, 4) - 1)) $num = $max + 1; // If counter > 9999, we do not format on 4 chars, we take number as it is
+		else $num = sprintf("%04s", $max + 1);
 
-		return $startStr.$num;
+		return $startStr . $num;
 	}
 
 	/**
