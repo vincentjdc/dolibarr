@@ -360,7 +360,7 @@ class modFacture extends DolibarrModules
 			)
 		);
 
-		//Import Supplier Invoice Lines
+		//Import Customer Invoice Lines
 		$r++;
 		$this->import_code[$r] = $this->rights_class.'_'.$r;
 		$this->import_label[$r] = "InvoiceLine"; // Translation key
@@ -368,6 +368,7 @@ class modFacture extends DolibarrModules
 		$this->import_entities_array[$r] = array(); // We define here only fields that use another icon that the one defined into import_icon
 		$this->import_tables_array[$r] = array('fd' => MAIN_DB_PREFIX.'facturedet', 'extra' => MAIN_DB_PREFIX.'facturedet_extrafields');
 		$this->import_fields_array[$r] = array(
+			'fd.rowid' => 'Id',
 			'fd.fk_facture' => 'InvoiceRef*',
 			'fd.fk_parent_line' => 'FacParentLine',
 			'fd.fk_product' => 'IdProduct',
@@ -385,6 +386,8 @@ class modFacture extends DolibarrModules
 			// fk_remise_except
 			// subprice
 			// price
+			'fd.subprice' => 'Subprice',
+			'fd.price' => 'Price',
 			'fd.total_ht' => 'LineTotalHT',
 			'fd.total_tva' => 'LineTotalVAT',
 			// total_localtax1
@@ -433,6 +436,7 @@ class modFacture extends DolibarrModules
 			'fd.multicurrency_code' => 'code@'.MAIN_DB_PREFIX.'multicurrency'
 		);
 		$import_sample = array(
+			'fd.rowid' => '',
 			'fd.fk_facture' => '(PROV00001)',
 			'fd.fk_parent_line' => '',
 			'fd.fk_product' => '',
@@ -450,6 +454,8 @@ class modFacture extends DolibarrModules
 			// fk_remise_except
 			// subprice
 			// price
+			'fd.subprice' => '100',
+			'fd.price' => '121',
 			'fd.total_ht' => '100',
 			'fd.total_tva' => '21',
 			// total_localtax1
@@ -480,7 +486,7 @@ class modFacture extends DolibarrModules
 		$this->import_examplevalues_array[$r] = array_merge($import_sample, $import_extrafield_sample);
 		$this->import_updatekeys_array[$r] = array(
 			'fd.rowid' => 'Row Id',
-			'fd.fk_facture' => 'Invoice Id'
+			//'fd.fk_facture' => 'Invoice Id'
 		);
 		$this->import_convertvalue_array[$r] = array(
 			'fd.fk_facture' => array(
