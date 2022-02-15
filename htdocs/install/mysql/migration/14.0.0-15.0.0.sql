@@ -100,6 +100,8 @@ UPDATE llx_facture_fourn SET multicurrency_total_ht = -multicurrency_total_ht WH
 UPDATE llx_facture_fourn SET multicurrency_total_tva = -multicurrency_total_tva WHERE ((multicurrency_total_tva < 0 and total_tva > 0) OR (multicurrency_total_tva > 0 and total_tva < 0));  
 UPDATE llx_facture_fourn SET multicurrency_total_ttc = -multicurrency_total_ttc WHERE ((multicurrency_total_ttc < 0 and total_ttc > 0) OR (multicurrency_total_ttc > 0 and total_ttc < 0));  
 
+ALTER TABLE llx_propaldet ADD COLUMN import_key varchar(14);
+
 
 -- v15
 
@@ -183,6 +185,9 @@ INSERT INTO llx_c_forme_juridique (fk_pays, code, libelle) VALUES (20, '2009', '
 INSERT INTO llx_c_forme_juridique (fk_pays, code, libelle) VALUES (20, '2010', 'Enkelt bolag');
 INSERT INTO llx_c_forme_juridique (fk_pays, code, libelle) VALUES (20, '2011', 'Ideell förening');
 INSERT INTO llx_c_forme_juridique (fk_pays, code, libelle) VALUES (20, '2012', 'Stiftelse');
+
+ALTER TABLE llx_c_holiday_types ADD COLUMN block_if_negative integer NOT NULL DEFAULT 0 AFTER fk_country;
+
 
 -- START  GRH/HRM MODULE
 

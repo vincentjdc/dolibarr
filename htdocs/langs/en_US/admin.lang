@@ -1,6 +1,6 @@
 # Dolibarr language file - Source file is en_US - admin
-BoldRefAndPeriodOnPDF=Bold reference and period in PDF
-BoldLabelOnPDF=Bold label in PDF
+BoldRefAndPeriodOnPDF=Print reference and period of product item in PDF
+BoldLabelOnPDF=Print label of product item in Bold in PDF
 Foundation=Foundation
 Version=Version
 Publisher=Publisher
@@ -1918,6 +1918,7 @@ ConfFileMustContainCustom=Installing or building an external module from applica
 HighlightLinesOnMouseHover=Highlight table lines when mouse move passes over
 HighlightLinesColor=Highlight color of the line when the mouse passes over (use 'ffffff' for no highlight)
 HighlightLinesChecked=Highlight color of the line when it is checked (use 'ffffff' for no highlight)
+UseBorderOnTable=Active border on tables
 BtnActionColor=Color of the action button
 TextBtnActionColor=Text color of the action button
 TextTitleColor=Text color of Page title
@@ -2207,8 +2208,8 @@ DashboardDisableBlockAdherent=Disable the thumb for memberships
 DashboardDisableBlockExpenseReport=Disable the thumb for expense reports
 DashboardDisableBlockHoliday=Disable the thumb for leaves
 EnabledCondition=Condition to have field enabled (if not enabled, visibility will always be off)
-IfYouUseASecondTaxYouMustSetYouUseTheMainTax=If you want to use a second tax, you must enable also the first sale tax
-IfYouUseAThirdTaxYouMustSetYouUseTheMainTax=If you want to use a third tax, you must enable also the first sale tax
+IfYouUseASecondTaxYouMustSetYouUseTheMainTax=If you want to use a second tax, you must enable also the first sales tax
+IfYouUseAThirdTaxYouMustSetYouUseTheMainTax=If you want to use a third tax, you must enable also the first sales tax
 LanguageAndPresentation=Language and presentation
 SkinAndColors=Skin and colors
 IfYouUseASecondTaxYouMustSetYouUseTheMainTax=If you want to use a second tax, you must enable also the first sales tax

@@ -1135,6 +1135,8 @@ if (empty($reshook)) {
 						$facture_source->fetchPreviousNextSituationInvoice();
 					}
 				}
+
+
 				$id = $object->create($user);
 				if ($id < 0) {
 					$error++;
@@ -1262,6 +1264,7 @@ if (empty($reshook)) {
 							$line->multicurrency_total_tva = -$line->multicurrency_total_tva;
 							$line->multicurrency_total_ttc = -$line->multicurrency_total_ttc;
 
+							$line->context['createcreditnotefrominvoice'] = 1;
 							$result = $line->insert(0, 1); // When creating credit note with same lines than source, we must ignore error if discount alreayd linked
 
 							$object->lines[] = $line; // insert new line in current object
@@ -4947,14 +4950,14 @@ if ($action == 'create') {
 	// List of payments already done
 
 	print '<div class="div-table-responsive-no-min">';
-	print '<table class="noborder paymenttable" width="100%">';
+	print '<table class="noborder paymenttable centpercent">';
 
 	print '<tr class="liste_titre">';
 	print '<td class="liste_titre">'.($object->type == Facture::TYPE_CREDIT_NOTE ? $langs->trans("PaymentsBack") : $langs->trans('Payments')).'</td>';
 	print '<td class="liste_titre">'.$langs->trans('Date').'</td>';
 	print '<td class="liste_titre">'.$langs->trans('Type').'</td>';
 	if (!empty($conf->banque->enabled)) {
-		print '<td class="liste_titre right">'.$langs->trans('BankAccount').'</td>';
+		print '<td class="liste_titre">'.$langs->trans('BankAccount').'</td>';
 	}
 	print '<td class="liste_titre right">'.$langs->trans('Amount').'</td>';
 	print '<td class="liste_titre" width="18">&nbsp;</td>';

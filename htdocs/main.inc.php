@@ -475,7 +475,9 @@ if ((!defined('NOCSRFCHECK') && empty($dolibarr_nocsrfcheck) && getDolGlobalInt(
 	$sensitiveget = false;
 	if ((GETPOSTISSET('massaction') || GETPOST('action', 'aZ09')) && getDolGlobalInt('MAIN_SECURITY_CSRF_WITH_TOKEN') >= 3) {
 		// All GET actions and mass actions are processed as sensitive.
-		$sensitiveget = true;
+		if (GETPOSTISSET('massaction') || !in_array(GETPOST('action', 'aZ09'), array('create', 'file_manager'))) {	// We exclude the case action='create' and action='file_manager' that are legitimate
+			$sensitiveget = true;
+		}
 	} elseif (getDolGlobalInt('MAIN_SECURITY_CSRF_WITH_TOKEN') >= 2) {
 		// Few GET actions coded with a &token into url are processed as sensitive.
 		$arrayofactiontoforcetokencheck = array(
@@ -934,7 +936,7 @@ if (!defined('NOLOGIN')) {
 				$relativepathstring = preg_replace('/^custom\//', '', $relativepathstring);
 				//var_dump($relativepathstring);
 
-				// We click on a link that leave a page we have to save search criteria, contextpage, limit and page. We save them from tmp to no tmp
+				// We click on a link that leave a page we have to save search criteria, contextpage, limit and page and mode. We save them from tmp to no tmp
 				if (!empty($_SESSION['lastsearch_values_tmp_'.$relativepathstring])) {
 					$_SESSION['lastsearch_values_'.$relativepathstring] = $_SESSION['lastsearch_values_tmp_'.$relativepathstring];
 					unset($_SESSION['lastsearch_values_tmp_'.$relativepathstring]);
@@ -943,13 +945,17 @@ if (!defined('NOLOGIN')) {
 					$_SESSION['lastsearch_contextpage_'.$relativepathstring] = $_SESSION['lastsearch_contextpage_tmp_'.$relativepathstring];
 					unset($_SESSION['lastsearch_contextpage_tmp_'.$relativepathstring]);
 				}
+				if (!empty($_SESSION['lastsearch_limit_tmp_'.$relativepathstring]) && $_SESSION['lastsearch_limit_tmp_'.$relativepathstring] != $conf->liste_limit) {
+					$_SESSION['lastsearch_limit_'.$relativepathstring] = $_SESSION['lastsearch_limit_tmp_'.$relativepathstring];
+					unset($_SESSION['lastsearch_limit_tmp_'.$relativepathstring]);
+				}
 				if (!empty($_SESSION['lastsearch_page_tmp_'.$relativepathstring]) && $_SESSION['lastsearch_page_tmp_'.$relativepathstring] > 0) {
 					$_SESSION['lastsearch_page_'.$relativepathstring] = $_SESSION['lastsearch_page_tmp_'.$relativepathstring];
 					unset($_SESSION['lastsearch_page_tmp_'.$relativepathstring]);
 				}
-				if (!empty($_SESSION['lastsearch_limit_tmp_'.$relativepathstring]) && $_SESSION['lastsearch_limit_tmp_'.$relativepathstring] != $conf->liste_limit) {
-					$_SESSION['lastsearch_limit_'.$relativepathstring] = $_SESSION['lastsearch_limit_tmp_'.$relativepathstring];
-					unset($_SESSION['lastsearch_limit_tmp_'.$relativepathstring]);
+				if (!empty($_SESSION['lastsearch_mode_tmp_'.$relativepathstring])) {
+					$_SESSION['lastsearch_mode_'.$relativepathstring] = $_SESSION['lastsearch_mode_tmp_'.$relativepathstring];
+					unset($_SESSION['lastsearch_mode_tmp_'.$relativepathstring]);
 				}
 			}
 
@@ -1098,8 +1104,8 @@ if (!defined('NOLOGIN')) {
 
 
 // Case forcing style from url
-if (GETPOST('theme', 'alpha')) {
-	$conf->theme = GETPOST('theme', 'alpha', 1);
+if (GETPOST('theme', 'aZ09')) {
+	$conf->theme = GETPOST('theme', 'aZ09', 1);
 	$conf->css = "/theme/".$conf->theme."/style.css.php";
 }
 
@@ -1512,12 +1518,14 @@ function top_htmlhead($head, $title = '', $disablejs = 0, $disablehead = 0, $arr
 		if (GETPOST('version', 'int')) {
 			$ext = 'version='.GETPOST('version', 'int'); // usefull to force no cache on css/js
 		}
+		// Refresh value of MAIN_IHM_PARAMS_REV before forging the parameter line.
+		if (GETPOST('dol_resetcache')) {
+			dolibarr_set_const($db, "MAIN_IHM_PARAMS_REV", ((int) $conf->global->MAIN_IHM_PARAMS_REV) + 1, 'chaine', 0, '', $conf->entity);
+		}
 
 		$themeparam = '?lang='.$langs->defaultlang.'&amp;theme='.$conf->theme.(GETPOST('optioncss', 'aZ09') ? '&amp;optioncss='.GETPOST('optioncss', 'aZ09', 1) : '').'&amp;userid='.$user->id.'&amp;entity='.$conf->entity;
+
 		$themeparam .= ($ext ? '&amp;'.$ext : '').'&amp;revision='.getDolGlobalInt("MAIN_IHM_PARAMS_REV");
-		if (!empty($_SESSION['dol_resetcache'])) {
-			$themeparam .= '&amp;dol_resetcache='.$_SESSION['dol_resetcache'];
-		}
 		if (GETPOSTISSET('dol_hide_topmenu')) {
 			$themeparam .= '&amp;dol_hide_topmenu='.GETPOST('dol_hide_topmenu', 'int');
 		}
@@ -1705,8 +1713,8 @@ function top_htmlhead($head, $title = '', $disablejs = 0, $disablehead = 0, $arr
 				}
 				print '<script>';
 				print '/* enable ckeditor by main.inc.php */';
-				print 'var CKEDITOR_BASEPATH = \''.$pathckeditor.'\';'."\n";
-				print 'var ckeditorConfig = \''.dol_buildpath($themesubdir.'/theme/'.$conf->theme.'/ckeditor/config.js'.($ext ? '?'.$ext : ''), 1).'\';'."\n"; // $themesubdir='' in standard usage
+				print 'var CKEDITOR_BASEPATH = \''.dol_escape_js($pathckeditor).'\';'."\n";
+				print 'var ckeditorConfig = \''.dol_escape_js(dol_buildpath($themesubdir.'/theme/'.$conf->theme.'/ckeditor/config.js'.($ext ? '?'.$ext : ''), 1)).'\';'."\n"; // $themesubdir='' in standard usage
 				print 'var ckeditorFilebrowserBrowseUrl = \''.DOL_URL_ROOT.'/core/filemanagerdol/browser/default/browser.php?Connector='.DOL_URL_ROOT.'/core/filemanagerdol/connectors/php/connector.php\';'."\n";
 				print 'var ckeditorFilebrowserImageBrowseUrl = \''.DOL_URL_ROOT.'/core/filemanagerdol/browser/default/browser.php?Type=Image&Connector='.DOL_URL_ROOT.'/core/filemanagerdol/connectors/php/connector.php\';'."\n";
 				print '</script>'."\n";
@@ -3108,7 +3116,7 @@ if (!function_exists("llxFooter")) {
 	{
 		global $conf, $db, $langs, $user, $mysoc, $object, $hookmanager;
 		global $delayedhtmlcontent;
-		global $contextpage, $page, $limit;
+		global $contextpage, $page, $limit, $mode;
 		global $dolibarr_distrib;
 
 		$ext = 'layout='.$conf->browser->layout.'&version='.urlencode(DOL_VERSION);
@@ -3148,6 +3156,7 @@ if (!function_exists("llxFooter")) {
 			unset($_SESSION['lastsearch_contextpage_tmp_'.$relativepathstring]);
 			unset($_SESSION['lastsearch_page_tmp_'.$relativepathstring]);
 			unset($_SESSION['lastsearch_limit_tmp_'.$relativepathstring]);
+			unset($_SESSION['lastsearch_mode_tmp_'.$relativepathstring]);
 
 			if (!empty($contextpage)) {
 				$_SESSION['lastsearch_contextpage_tmp_'.$relativepathstring] = $contextpage;
@@ -3158,10 +3167,14 @@ if (!function_exists("llxFooter")) {
 			if (!empty($limit) && $limit != $conf->liste_limit) {
 				$_SESSION['lastsearch_limit_tmp_'.$relativepathstring] = $limit;
 			}
+			if (!empty($mode)) {
+				$_SESSION['lastsearch_mode_tmp_'.$relativepathstring] = $mode;
+			}
 
 			unset($_SESSION['lastsearch_contextpage_'.$relativepathstring]);
 			unset($_SESSION['lastsearch_page_'.$relativepathstring]);
 			unset($_SESSION['lastsearch_limit_'.$relativepathstring]);
+			unset($_SESSION['lastsearch_mode_'.$relativepathstring]);
 		}
 
 		// Core error message

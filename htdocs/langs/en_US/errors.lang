@@ -9,6 +9,7 @@ ErrorBadMXDomain=Email %s seems incorrect (domain has no valid MX record)
 ErrorBadUrl=Url %s is incorrect
 ErrorBadValueForParamNotAString=Bad value for your parameter. It appends generally when translation is missing.
 ErrorRefAlreadyExists=Reference <b>%s</b> already exists.
+ErrorTitleAlreadyExists=Title <b>%s</b> already exists.
 ErrorLoginAlreadyExists=Login %s already exists.
 ErrorGroupAlreadyExists=Group %s already exists.
 ErrorEmailAlreadyExists=Email %s already exists.
@@ -276,6 +277,7 @@ ErrorNotInDictionaryPaymentConditions=Not in Payment Terms Dictionary, please mo
 ErrorIsNotADraft=%s is not a draft
 ErrorExecIdFailed=Can't execute command "id"
 ErrorBadCharIntoLoginName=Unauthorized character in the login name
+ErrorRequestTooLarge=Error, request too large
 
 # Warnings
 WarningParamUploadMaxFileSizeHigherThanPostMaxSize=Your PHP parameter upload_max_filesize (%s) is higher than PHP parameter post_max_size (%s). This is not a consistent setup.

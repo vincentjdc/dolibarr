@@ -86,8 +86,8 @@ if (empty($dolibarr_nocache)) {
 	header('Cache-Control: no-cache');
 }
 
-if (GETPOST('theme', 'alpha')) {
-	$conf->theme = GETPOST('theme', 'alpha'); // If theme was forced on URL
+if (GETPOST('theme', 'aZ09')) {
+	$conf->theme = GETPOST('theme', 'aZ09'); // If theme was forced on URL
 }
 if (GETPOST('lang', 'aZ09')) {
 	$langs->setDefaultLang(GETPOST('lang', 'aZ09')); // If language was forced on URL
@@ -4894,7 +4894,7 @@ tr.visible {
 
 .websiteformtoolbar {
 	position: sticky;
-	top: <?php echo $disableimages ? '36px' : '50px'; ?>;
+	top: <?php echo empty($dol_hide_topmenu) ? ($disableimages ? '36px' : '50px') : '0'; ?>;
 }
 
 .exampleapachesetup {
