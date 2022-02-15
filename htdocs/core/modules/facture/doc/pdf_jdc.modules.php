@@ -142,7 +142,7 @@ class pdf_jdc extends ModelePDFFactures
 		global $conf, $langs, $mysoc;
 
 		// Translations
-		$langs->loadLangs(array("main", "bills"));
+		$langs->loadLangs(array("main", "bills", "jdc@jdc"));
 
 		$this->db = $db;
 		$this->name = "JDC";
@@ -240,14 +240,14 @@ class pdf_jdc extends ModelePDFFactures
 		}
 
 		// Load translation files required by the page
-		$outputlangs->loadLangs(array("main", "bills", "products", "dict", "companies"));
+		$outputlangs->loadLangs(array("main", "bills", "products", "dict", "companies", "jdc@jdc"));
 
 		global $outputlangsbis;
 		$outputlangsbis = null;
 		if (!empty($conf->global->PDF_USE_ALSO_LANGUAGE_CODE) && $outputlangs->defaultlang != $conf->global->PDF_USE_ALSO_LANGUAGE_CODE) {
 			$outputlangsbis = new Translate('', $conf);
 			$outputlangsbis->setDefaultLang($conf->global->PDF_USE_ALSO_LANGUAGE_CODE);
-			$outputlangsbis->loadLangs(array("main", "bills", "products", "dict", "companies"));
+			$outputlangsbis->loadLangs(array("main", "bills", "products", "dict", "companies", "jdc@jdc"));
 		}
 
 		// Get source company
@@ -1270,7 +1270,7 @@ class pdf_jdc extends ModelePDFFactures
 		if (!empty($conf->global->PDF_USE_ALSO_LANGUAGE_CODE) && $outputlangs->defaultlang != $conf->global->PDF_USE_ALSO_LANGUAGE_CODE) {
 			$outputlangsbis = new Translate('', $conf);
 			$outputlangsbis->setDefaultLang($conf->global->PDF_USE_ALSO_LANGUAGE_CODE);
-			$outputlangsbis->loadLangs(array("main", "dict", "companies", "bills", "products", "propal"));
+			$outputlangsbis->loadLangs(array("main", "dict", "companies", "bills", "products", "propal", "jdc@jdc"));
 			$default_font_size--;
 		}
 
@@ -1699,7 +1699,7 @@ class pdf_jdc extends ModelePDFFactures
 		if ($outputlangs->trans("DIRECTION") == 'rtl') $ltrdirection = 'R';
 
 		// Load traductions files required by page
-		$outputlangs->loadLangs(array("main", "bills", "propal", "companies"));
+		$outputlangs->loadLangs(array("main", "bills", "propal", "companies", "jdc@jdc"));
 
 		$default_font_size = pdf_getPDFFontSize($outputlangs);
 
@@ -2091,26 +2091,48 @@ class pdf_jdc extends ModelePDFFactures
 	 */
 	protected function _pagefoot(&$pdf, $object, $outputlangs, $hidefreetext = 0)
 	{
-		global $conf;
+		global $conf, $langs;
 
 		$posy = $pdf->GetY();
 		$posy += 10;
 
 		$posx = $pdf->GetX();
 
+		$object->fetch_optionals();
+		dol_syslog(print_r($object->array_options, 1), LOG_DEBUG);
+
+		if ($object->array_options['options_tva_mention'] > 0) {
+			$mention = '';
+			switch($object->array_options['options_tva_mention']) {
+				case 1:
+					$mention = 'JdcESToFR';
+					break;
+				case 2:
+					$mention = 'JdcSAToFR';
+					break;
+				case 3:
+					$mention = 'JdcSAToBE';
+					break;
+			}
+			dol_syslog('==>'.$mention, LOG_INFO);
+			$pdf->SetXY($posx, $posy);
+			$pdf->MultiCell(190, 4, $outputlangs->transnoentities($mention), 0, 'L');
+			$posy += 10;
+		}
+
 		$pdf->SetXY($posx, $posy);
-		$pdf->MultiCell(190, 4, "Pour toute question concernant cette facture, veuillez contacter notre service de facturation : +32 (0)69 / 77.92.30", 0, 'L');
+		$pdf->MultiCell(190, 4, $outputlangs->trans('InvoiceAnyQuestion'), 0, 'L');
 
 		$posy += 15;
 		$pdf->SetXY($posx, $posy);
-		$pdf->MultiCell(190, 4, "Généralité", 0, 'L');
+		$pdf->MultiCell(190, 4, $outputlangs->transnoentities('Generalities'), 0, 'L');
 
 		$posy += 6;
 		$pdf->SetXY($posx, $posy);
-		$pdf->MultiCell(190, 4, "1. Veuillez mentionner le numéro de facture lors du paiement", 0, 'L');
+		$pdf->MultiCell(190, 4, $outputlangs->transnoentities('InvoiceMention1', $object->ref), 0, 'L');
 		$posy += 6;
 		$pdf->SetXY($posx, $posy);
-		$pdf->MultiCell(190, 4, "2. Pénalités de retard au taux annuel de 10%. Pas d'escompte en cas de paiement anticipé.", 0, 'L');
+		$pdf->MultiCell(190, 4, $outputlangs->transnoentities('InvoiceMention2'), 0, 'L');
 
 		$showdetails = empty($conf->global->MAIN_GENERATE_DOCUMENTS_SHOW_FOOT_DETAILS) ? 1 : $conf->global->MAIN_GENERATE_DOCUMENTS_SHOW_FOOT_DETAILS;
 		return ''; //pdf_pagefoot($pdf, $outputlangs, 'INVOICE_FREE_TEXT', $this->emetteur, $this->marge_basse, $this->marge_gauche, $this->page_hauteur, $object, $showdetails, $hidefreetext);

@@ -90,6 +90,8 @@ class mod_project_jdc extends ModeleNumRefProjects
 	{
 		global $conf, $langs, $db;
 
+		return true;
+
 		$coyymm = '';
 		$max = '';
 
