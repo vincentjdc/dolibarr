@@ -97,17 +97,30 @@ class mod_progress_report_standard
 		return true;
 	}
 
-	public function getExistingProgressReports($order)
+	public function getExistingProgressReports($object)
 	{
 		global $db;
 
-		$sql = strtr(
-			"SELECT rowid FROM {progress_report_table} WHERE fk_order = {order_id} ORDER BY ref DESC",
-			[
-				"{progress_report_table}" => MAIN_DB_PREFIX."jdc_progress_report",
-				"{order_id}" => $order->id
-			]
-		);
+		if ($object instanceof Project) {
+			$sql = strtr(
+				"SELECT rowid FROM {progress_report_table} WHERE fk_project = {project_id} ORDER BY ref DESC",
+				[
+					"{progress_report_table}" => MAIN_DB_PREFIX."jdc_progress_report",
+					"{project_id}" => $object->id
+				]
+			);
+
+		} else {
+			$sql = strtr(
+				"SELECT rowid FROM {progress_report_table} WHERE fk_order = {order_id} ORDER BY ref DESC",
+				[
+					"{progress_report_table}" => MAIN_DB_PREFIX."jdc_progress_report",
+					"{order_id}" => $object->id
+				]
+			);
+
+		}
+
 
 		dol_syslog('VINCENT : '.$sql, LOG_DEBUG);
 
@@ -139,10 +152,17 @@ class mod_progress_report_standard
 	{
 		global $db, $conf;
 
-		$order = new Commande($db);
-		$order->fetch($progressReport->fk_order);
+		if ($progressReport->fk_order == null) {
+			// project progress report
+			$project = new Project($db);
+			$project->fetch($progressReport->fk_project);
+			$progressReports = $this->getExistingProgressReports($project);
+		} else {
+			$order = new Commande($db);
+			$order->fetch($progressReport->fk_order);
+			$progressReports = $this->getExistingProgressReports($order);
+		}
 
-		$progressReports = $this->getExistingProgressReports($order);
 		$progressReportsCount = count($progressReports);
 
 		$num = 1;
@@ -150,7 +170,13 @@ class mod_progress_report_standard
 			$num = $progressReportsCount+1;
 		}
 
-		$ref = $order->ref . '-' . str_pad($num, 3, "0", STR_PAD_LEFT);
+		if ($progressReport->fk_order == null) {
+			$ref = $project->ref . '-EA' .str_pad($num, 4, "0", STR_PAD_LEFT);
+		} else {
+			$ref = $order->ref . '-' .str_pad($num, 4, "0", STR_PAD_LEFT);
+		}
+
+		//die('ref : '.$ref);
 
 		return $ref;
 	}
