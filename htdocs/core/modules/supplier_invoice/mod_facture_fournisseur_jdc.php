@@ -106,12 +106,11 @@ class mod_facture_fournisseur_jdc extends ModeleNumRefSuppliersInvoices
 	 */
 	public function getNextValue($objsoc, $object, $mode = 'next')
 	{
-		global $db, $conf;
+		global $db, $conf, $langs;
 
 		$date = $object->date; // This is invoice date (not creation date)
 		$year4digits = strftime("%Y", $date);
 		$year2digits = strftime("%y", $date);
-
 
 		// Get the entity of the invoice
 		$entityId = $object->array_options['options_fk_jdc_entity'];
@@ -137,6 +136,11 @@ class mod_facture_fournisseur_jdc extends ModeleNumRefSuppliersInvoices
 		// Get the base
 		$journalBase = preg_replace('/\{0+\}/', '' , $journalMask);
 
+		if ($journalBase == '') {
+			$object->error = $langs->trans('NoJournalForThatEntity');
+			return -1;
+		}
+
 		// Fetch the last count for that base
 		$start = strlen($journalBase) + 1;
 		$sql = "SELECT MAX(CAST(SUBSTRING(ref FROM ".$start.") AS SIGNED)) as min";
@@ -154,11 +158,12 @@ class mod_facture_fournisseur_jdc extends ModeleNumRefSuppliersInvoices
 				$min = 0;
 			}
 		} else {
+			$object->error = 'error';
 			return -1;
 		}
 
 		$min = max($min, $journalMin);
-
+		//echo $sql;
 		// Replace the counter of the mask with the need one (last or next)
 		$ref = preg_replace_callback('/\{(0+)\}/', function($matches) use ($min, $mode) {
 			$numberOfDigits = strlen($matches[1]);
