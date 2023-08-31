@@ -2734,7 +2734,7 @@ class CommandeFournisseur extends CommonOrder
 
 			$remise_percent = price2num($remise_percent);
 			$qty = price2num($qty);
-			if (!$qty) {
+			if (!$qty && !$conf->global->SUPPLIER_ORDER_ALLOW_QTY_0) {
 				$qty = 1;
 			}
 			$pu = price2num($pu);

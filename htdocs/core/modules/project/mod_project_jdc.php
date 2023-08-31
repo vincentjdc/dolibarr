@@ -129,7 +129,7 @@ class mod_project_jdc extends ModeleNumRefProjects
 	{
 		global $db, $conf;
 
-		$year = date('y', $project->date_start);
+		$year = date('y', $project->date_c);
 		$type = $project->array_options['options_type'];
 
 		if ($type == 1) { // Devis

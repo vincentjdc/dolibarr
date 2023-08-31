@@ -96,6 +96,7 @@ call_user_func(function () {
 require_once DOL_DOCUMENT_ROOT.'/api/class/api.class.php';
 require_once DOL_DOCUMENT_ROOT.'/api/class/api_access.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/functions2.lib.php';
+require_once DOL_DOCUMENT_ROOT.'/core/lib/ip.lib.php';
 
 
 $url = $_SERVER['PHP_SELF'];
@@ -190,9 +191,22 @@ UploadFormat::$allowedMimeTypes = array('image/jpeg', 'image/png', 'text/plain',
 
 // Restrict API to some IPs
 if (!empty($conf->global->API_RESTRICT_ON_IP)) {
-	$allowedip = explode(' ', $conf->global->API_RESTRICT_ON_IP);
+	$allowedips = explode(' ', $conf->global->API_RESTRICT_ON_IP);
 	$ipremote = getUserRemoteIP();
-	if (!in_array($ipremote, $allowedip)) {
+	$ip_is_allowed = false;
+	if (in_array($ipremote, $allowedips)) {
+		$ip_is_allowed = true;
+	} else {
+		// check for ip range
+		foreach($allowedips as $allowedip) {
+			if (ipInRange($ipremote, $allowedip)) {
+				$ip_is_allowed = true;
+				break;
+			}
+		}
+	}
+
+	if (!$ip_is_allowed) {
 		dol_syslog('Remote ip is '.$ipremote.', not into list '.$conf->global->API_RESTRICT_ON_IP);
 		print 'APIs are not allowed from the IP '.$ipremote;
 		header('HTTP/1.1 503 API not allowed from your IP '.$ipremote);

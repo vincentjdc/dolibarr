@@ -36,6 +36,7 @@ require_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/functions2.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/pdf.lib.php';
+require_once DOL_DOCUMENT_ROOT.'/core/class/ccountry.class.php';
 require_once DOL_DOCUMENT_ROOT.'/custom/jdc/class/jdcentity.class.php';
 
 /**
@@ -254,7 +255,9 @@ class pdf_jdc extends ModelePDFFactures
 		$this->emetteur = new JdcEntity($db);
 		$this->emetteur->fetch($object->array_options['options_fk_jdc_entity']);
 		if (empty($this->emetteur->country_code)) {
-			$this->emetteur->country_code = substr($langs->defaultlang, -2); // By default, if was not defined
+			$country = new Ccountry($db);
+			$country->fetch($this->emetteur->country);
+			$this->emetteur->country_code = $country->code;  // By default, if was not defined
 		}
 
 		$nblines = count($object->lines);
@@ -340,7 +343,7 @@ class pdf_jdc extends ModelePDFFactures
 				$heightforfreetext = (isset($conf->global->MAIN_PDF_FREETEXT_HEIGHT) ? $conf->global->MAIN_PDF_FREETEXT_HEIGHT : 5); // Height reserved to output the free text on last page
 				$heightforfooter = $this->marge_basse + 8; // Height reserved to output the footer (value include bottom margin)
 				if (!empty($conf->global->MAIN_GENERATE_DOCUMENTS_SHOW_FOOT_DETAILS)) {
-					$heightforfooter += 6;
+					$heightforfooter += 8;
 				}
 
 				if (class_exists('TCPDF')) {
@@ -652,7 +655,7 @@ class pdf_jdc extends ModelePDFFactures
 					// Unit price before discount
 					$up_excl_tax = pdf_getlineupexcltax($object, $i, $outputlangs, $hidedetails);
 					$pdf->SetXY($this->posxup, $curY);
-					$pdf->MultiCell($this->posxqty - $this->posxup - 0.8, 3, $up_excl_tax, 0, 'R', 0);
+					$pdf->MultiCell($this->posxqty - $this->posxup - 0.8, 3, price(price2num($up_excl_tax), 0, $outputlangs, 1, -1, -1, 'auto'), 0, 'R', 0);
 
 					// Quantity
 					$qty = pdf_getlineqty($object, $i, $outputlangs, $hidedetails);
@@ -683,7 +686,7 @@ class pdf_jdc extends ModelePDFFactures
 					// Total HT line
 					$total_excl_tax = pdf_getlinetotalexcltax($object, $i, $outputlangs, $hidedetails);
 					$pdf->SetXY($this->postotalht, $curY);
-					$pdf->MultiCell($this->page_largeur - $this->marge_droite - $this->postotalht, 3, $total_excl_tax, 0, 'R', 0);
+					$pdf->MultiCell($this->page_largeur - $this->marge_droite - $this->postotalht, 3, price(price2num($total_excl_tax), 0, $outputlangs, 1, -1, -1, 'auto'), 0, 'R', 0);
 
 
 					$sign = 1;
@@ -945,7 +948,7 @@ class pdf_jdc extends ModelePDFFactures
 				$pdf->SetXY($tab3_posx, $tab3_top + $y);
 				$pdf->MultiCell(20, 3, dol_print_date($this->db->jdate($obj->datef), 'day', false, $outputlangs, true), 0, 'L', 0);
 				$pdf->SetXY($tab3_posx + 21, $tab3_top + $y);
-				$pdf->MultiCell(20, 3, price((!empty($conf->multicurrency->enabled) && $object->multicurrency_tx != 1) ? $obj->multicurrency_amount_ttc : $obj->amount_ttc, 0, $outputlangs), 0, 'L', 0);
+				$pdf->MultiCell(20, 3, price((!empty($conf->multicurrency->enabled) && $object->multicurrency_tx != 1) ? $obj->multicurrency_amount_ttc : $obj->amount_ttc, 0, $outputlangs, 1, -1, -1, 'auto'), 0, 'L', 0);
 				$pdf->SetXY($tab3_posx + 40, $tab3_top + $y);
 				$pdf->MultiCell(20, 3, $text, 0, 'L', 0);
 				$pdf->SetXY($tab3_posx + 58, $tab3_top + $y);
@@ -995,7 +998,7 @@ class pdf_jdc extends ModelePDFFactures
 				$pdf->SetXY($tab3_posx, $tab3_top + $y);
 				$pdf->MultiCell(20, 3, dol_print_date($this->db->jdate($row->date), 'day', false, $outputlangs, true), 0, 'L', 0);
 				$pdf->SetXY($tab3_posx + 21, $tab3_top + $y);
-				$pdf->MultiCell(20, 3, price($sign * ((!empty($conf->multicurrency->enabled) && $object->multicurrency_tx != 1) ? $row->multicurrency_amount : $row->amount), 0, $outputlangs), 0, 'L', 0);
+				$pdf->MultiCell(20, 3, price($sign * ((!empty($conf->multicurrency->enabled) && $object->multicurrency_tx != 1) ? $row->multicurrency_amount : $row->amount), 0, $outputlangs, 1, -1, -1, 'auto'), 0, 'L', 0);
 				$pdf->SetXY($tab3_posx + 40, $tab3_top + $y);
 				$oper = $outputlangs->transnoentitiesnoconv("PaymentTypeShort".$row->code);
 
@@ -1296,7 +1299,7 @@ class pdf_jdc extends ModelePDFFactures
 
 		$total_ht = ((!empty($conf->multicurrency->enabled) && isset($object->multicurrency_tx) && $object->multicurrency_tx != 1) ? $object->multicurrency_total_ht : $object->total_ht);
 		$pdf->SetXY($col2x, $tab2_top + 0);
-		$pdf->MultiCell($largcol2, $tab2_hl, price($sign * ($total_ht + (!empty($object->remise) ? $object->remise : 0)), 0, $outputlangs), 0, 'R', 1);
+		$pdf->MultiCell($largcol2, $tab2_hl, price($sign * ($total_ht + (!empty($object->remise) ? $object->remise : 0)), 0, $outputlangs, 1, -1, -1, 'auto'), 0, 'R', 1);
 
 		// Show VAT by rates and total
 		$pdf->SetFillColor(248, 248, 248);
@@ -1338,7 +1341,7 @@ class pdf_jdc extends ModelePDFFactures
 							$pdf->MultiCell($col2x - $col1x, $tab2_hl, $totalvat, 0, 'L', 1);
 
 							$pdf->SetXY($col2x, $tab2_top + $tab2_hl * $index);
-							$pdf->MultiCell($largcol2, $tab2_hl, price($tvaval, 0, $outputlangs), 0, 'R', 1);
+							$pdf->MultiCell($largcol2, $tab2_hl, price($tvaval, 0, $outputlangs, 1, -1, -1, 'auto'), 0, 'R', 1);
 						}
 					}
 				}
@@ -1371,7 +1374,7 @@ class pdf_jdc extends ModelePDFFactures
 							$pdf->MultiCell($col2x - $col1x, $tab2_hl, $totalvat, 0, 'L', 1);
 
 							$pdf->SetXY($col2x, $tab2_top + $tab2_hl * $index);
-							$pdf->MultiCell($largcol2, $tab2_hl, price($tvaval, 0, $outputlangs), 0, 'R', 1);
+							$pdf->MultiCell($largcol2, $tab2_hl, price($tvaval, 0, $outputlangs, 1, -1, -1, 'auto'), 0, 'R', 1);
 						}
 					}
 				}
@@ -1396,7 +1399,7 @@ class pdf_jdc extends ModelePDFFactures
 						$pdf->MultiCell($col2x - $col1x, $tab2_hl, $totalvat, 0, 'L', 1);
 
 						$pdf->SetXY($col2x, $tab2_top + $tab2_hl * $index);
-						$pdf->MultiCell($largcol2, $tab2_hl, price(price2num($tvaval, 'MT'), 0, $outputlangs), 0, 'R', 1);
+						$pdf->MultiCell($largcol2, $tab2_hl, price(price2num($tvaval, 'MT'), 0, $outputlangs, 1, -1, -1, 'auto'), 0, 'R', 1);
 					}
 				}
 
@@ -1425,7 +1428,7 @@ class pdf_jdc extends ModelePDFFactures
 
 							$pdf->MultiCell($col2x - $col1x, $tab2_hl, $totalvat, 0, 'L', 1);
 							$pdf->SetXY($col2x, $tab2_top + $tab2_hl * $index);
-							$pdf->MultiCell($largcol2, $tab2_hl, price($tvaval, 0, $outputlangs), 0, 'R', 1);
+							$pdf->MultiCell($largcol2, $tab2_hl, price($tvaval, 0, $outputlangs, 1, -1, -1, 'auto'), 0, 'R', 1);
 						}
 					}
 				}
@@ -1455,7 +1458,7 @@ class pdf_jdc extends ModelePDFFactures
 						$pdf->MultiCell($col2x - $col1x, $tab2_hl, $totalvat, 0, 'L', 1);
 
 						$pdf->SetXY($col2x, $tab2_top + $tab2_hl * $index);
-						$pdf->MultiCell($largcol2, $tab2_hl, price($tvaval, 0, $outputlangs), 0, 'R', 1);
+						$pdf->MultiCell($largcol2, $tab2_hl, price($tvaval, 0, $outputlangs, 1, -1, -1, 'auto'), 0, 'R', 1);
 					}
 				}
 				//}
@@ -1467,7 +1470,7 @@ class pdf_jdc extends ModelePDFFactures
 					$pdf->MultiCell($col2x - $col1x, $tab2_hl, $outputlangs->transnoentities("RevenueStamp"), $useborder, 'L', 1);
 
 					$pdf->SetXY($col2x, $tab2_top + $tab2_hl * $index);
-					$pdf->MultiCell($largcol2, $tab2_hl, price($sign * $object->revenuestamp), $useborder, 'R', 1);
+					$pdf->MultiCell($largcol2, $tab2_hl, price($sign * $object->revenuestamp, 0, $outputlangs, 1, -1, -1, 'auto'), $useborder, 'R', 1);
 				}
 
 				// Total TTC
@@ -1478,7 +1481,7 @@ class pdf_jdc extends ModelePDFFactures
 				$pdf->MultiCell($col2x - $col1x, $tab2_hl, $outputlangs->transnoentities("TotalTTC"), $useborder, 'L', 1);
 
 				$pdf->SetXY($col2x, $tab2_top + $tab2_hl * $index);
-				$pdf->MultiCell($largcol2, $tab2_hl, price($sign * $total_ttc, 0, $outputlangs), $useborder, 'R', 1);
+				$pdf->MultiCell($largcol2, $tab2_hl, price($sign * $total_ttc, 0, $outputlangs, 1, -1, -1, 'auto'), $useborder, 'R', 1);
 
 				// Retained warranty
 				if ($object->displayRetainedWarranty()) {
@@ -1494,7 +1497,7 @@ class pdf_jdc extends ModelePDFFactures
 					$pdf->MultiCell($col2x - $col1x, $tab2_hl, $outputlangs->transnoentities("ToPayOn", dol_print_date($object->date_lim_reglement, 'day')), $useborder, 'L', 1);
 
 					$pdf->SetXY($col2x, $tab2_top + $tab2_hl * $index);
-					$pdf->MultiCell($largcol2, $tab2_hl, price($billedWithRetainedWarranty), $useborder, 'R', 1);
+					$pdf->MultiCell($largcol2, $tab2_hl, price($billedWithRetainedWarranty, 0, $outputlangs, 1, -1, -1, 'auto'), $useborder, 'R', 1);
 
 					// retained warranty
 					$index++;
@@ -1505,7 +1508,7 @@ class pdf_jdc extends ModelePDFFactures
 
 					$pdf->MultiCell($col2x - $col1x, $tab2_hl, $retainedWarrantyToPayOn, $useborder, 'L', 1);
 					$pdf->SetXY($col2x, $tab2_top + $tab2_hl * $index);
-					$pdf->MultiCell($largcol2, $tab2_hl, price($retainedWarranty), $useborder, 'R', 1);
+					$pdf->MultiCell($largcol2, $tab2_hl, price($retainedWarranty, 0, $outputlangs, 1, -1, -1, 'auto'), $useborder, 'R', 1);
 				}
 			}
 		}
@@ -1525,7 +1528,7 @@ class pdf_jdc extends ModelePDFFactures
 			$pdf->SetXY($col1x, $tab2_top + $tab2_hl * $index);
 			$pdf->MultiCell($col2x - $col1x, $tab2_hl, $outputlangs->transnoentities("Paid"), 0, 'L', 0);
 			$pdf->SetXY($col2x, $tab2_top + $tab2_hl * $index);
-			$pdf->MultiCell($largcol2, $tab2_hl, price($deja_regle + $depositsamount, 0, $outputlangs), 0, 'R', 0);
+			$pdf->MultiCell($largcol2, $tab2_hl, price($deja_regle + $depositsamount, 0, $outputlangs, 1, -1, -1, 'auto'), 0, 'R', 0);
 
 			// Credit note
 			if ($creditnoteamount) {
@@ -1534,7 +1537,7 @@ class pdf_jdc extends ModelePDFFactures
 				$pdf->SetXY($col1x, $tab2_top + $tab2_hl * $index);
 				$pdf->MultiCell($col2x - $col1x, $tab2_hl, $labeltouse, 0, 'L', 0);
 				$pdf->SetXY($col2x, $tab2_top + $tab2_hl * $index);
-				$pdf->MultiCell($largcol2, $tab2_hl, price($creditnoteamount, 0, $outputlangs), 0, 'R', 0);
+				$pdf->MultiCell($largcol2, $tab2_hl, price($creditnoteamount, 0, $outputlangs, 1, -1, -1, 'auto'), 0, 'R', 0);
 			}
 
 			// Escompte
@@ -1545,7 +1548,7 @@ class pdf_jdc extends ModelePDFFactures
 				$pdf->SetXY($col1x, $tab2_top + $tab2_hl * $index);
 				$pdf->MultiCell($col2x - $col1x, $tab2_hl, $outputlangs->transnoentities("EscompteOfferedShort"), $useborder, 'L', 1);
 				$pdf->SetXY($col2x, $tab2_top + $tab2_hl * $index);
-				$pdf->MultiCell($largcol2, $tab2_hl, price($object->total_ttc - $deja_regle - $creditnoteamount - $depositsamount, 0, $outputlangs), $useborder, 'R', 1);
+				$pdf->MultiCell($largcol2, $tab2_hl, price($object->total_ttc - $deja_regle - $creditnoteamount - $depositsamount, 0, $outputlangs, 1, -1, -1, 'auto'), $useborder, 'R', 1);
 
 				$resteapayer = 0;
 			}
@@ -1556,7 +1559,7 @@ class pdf_jdc extends ModelePDFFactures
 			$pdf->SetXY($col1x, $tab2_top + $tab2_hl * $index);
 			$pdf->MultiCell($col2x - $col1x, $tab2_hl, $outputlangs->transnoentities("RemainderToPay"), $useborder, 'L', 1);
 			$pdf->SetXY($col2x, $tab2_top + $tab2_hl * $index);
-			$pdf->MultiCell($largcol2, $tab2_hl, price($resteapayer, 0, $outputlangs), $useborder, 'R', 1);
+			$pdf->MultiCell($largcol2, $tab2_hl, price($resteapayer, 0, $outputlangs, 1, -1, -1, 'auto'), $useborder, 'R', 1);
 
 			$pdf->SetFont('', '', $default_font_size - 1);
 			$pdf->SetTextColor(0, 0, 0);
@@ -1867,7 +1870,7 @@ class pdf_jdc extends ModelePDFFactures
 
 		if ($showaddress) {
 			// Sender properties
-			$carac_emetteur = pdf_build_address($outputlangs, $this->emetteur, $object->thirdparty, '', 0, 'source', $object);
+			$carac_emetteur = pdf_build_address($outputlangs, $this->emetteur, null, '', 0, 'source', $object);
 
 			// Show sender
 			$posy = !empty($conf->global->MAIN_PDF_USE_ISO_LOCATION) ? 40 : 42;
@@ -1985,6 +1988,8 @@ class pdf_jdc extends ModelePDFFactures
 			$pdf->SetFont('', '', $default_font_size - 1);
 			$pdf->SetXY($posx + 2, $posy);
 			$pdf->MultiCell($widthrecbox - 2, 4, $carac_client, 0, $ltrdirection);
+		} else {
+			$toptabley = $pdf->getY() + 24;
 		}
 
 		$posy = $pdf->getY();
@@ -1994,6 +1999,7 @@ class pdf_jdc extends ModelePDFFactures
 		$widthrecbox = 190;
 		$posx = $this->page_largeur - $this->marge_droite - $widthrecbox;
 		$posy = $toptabley;
+		$pdf->SetTextColor('black');
 		$pdf->SetXY($posx + 2, $posy + 3);
 		$iban = $this->emetteur->bank_account;
 		$bank = $this->emetteur->bank_name;
@@ -2068,7 +2074,7 @@ class pdf_jdc extends ModelePDFFactures
 		$pdf->MultiCell(40, 4, $object->ref, 1, 'C', false, 1, $posx + 40, $posy);
 		$pdf->MultiCell(40, 4, $date, 1, 'C', false, 1, $posx + 80, $posy);
 		$pdf->MultiCell(40, 4, $date_lim_reglement, 1, 'C', false, 1, $posx + 120, $posy);
-		$pdf->MultiCell(30, 4, price($sign * ($total_ttc + (!empty($object->remise) ? $object->remise : 0))), 1, 'C', false, 1, $posx + 160, $posy);
+		$pdf->MultiCell(30, 4, price($sign * ($total_ttc + (!empty($object->remise) ? $object->remise : 0)), 0, $outputlangs, 1, -1, -1, 'auto'), 1, 'C', false, 1, $posx + 160, $posy);
 
 		$posy += 7;
 		$pdf->SetXY($posx + 2, $posy);
@@ -2101,38 +2107,40 @@ class pdf_jdc extends ModelePDFFactures
 		$object->fetch_optionals();
 		dol_syslog(print_r($object->array_options, 1), LOG_DEBUG);
 
-		if ($object->array_options['options_tva_mention'] > 0) {
-			$mention = '';
-			switch($object->array_options['options_tva_mention']) {
-				case 1:
-					$mention = 'JdcESToFR';
-					break;
-				case 2:
-					$mention = 'JdcSAToFR';
-					break;
-				case 3:
-					$mention = 'JdcSAToBE';
-					break;
+		if ($hidefreetext == 0) {
+			if ($object->array_options['options_tva_mention'] > 0) {
+				$mention = '';
+				switch($object->array_options['options_tva_mention']) {
+					case 1:
+						$mention = 'JdcESToFR';
+						break;
+					case 2:
+						$mention = 'JdcSAToFR';
+						break;
+					case 3:
+						$mention = 'JdcSAToBE';
+						break;
+				}
+				$pdf->SetXY($posx, $posy);
+				$pdf->MultiCell(190, 4, $outputlangs->transnoentities($mention), 0, 'L');
+				$posy += 10;
 			}
-			dol_syslog('==>'.$mention, LOG_INFO);
+
 			$pdf->SetXY($posx, $posy);
-			$pdf->MultiCell(190, 4, $outputlangs->transnoentities($mention), 0, 'L');
-			$posy += 10;
+			$pdf->MultiCell(190, 4, $outputlangs->trans('InvoiceAnyQuestion'), 0, 'L');
+
+			$posy += 15;
+			$pdf->SetXY($posx, $posy);
+			$pdf->MultiCell(190, 4, $outputlangs->transnoentities('Generalities'), 0, 'L');
+
+			$posy += 6;
+			$pdf->SetXY($posx, $posy);
+			$pdf->MultiCell(190, 4, $outputlangs->transnoentities('InvoiceMention1', $object->ref), 0, 'L');
+			$posy += 6;
+			$pdf->SetXY($posx, $posy);
+			$pdf->MultiCell(190, 4, $outputlangs->transnoentities('InvoiceMention2'), 0, 'L');
 		}
 
-		$pdf->SetXY($posx, $posy);
-		$pdf->MultiCell(190, 4, $outputlangs->trans('InvoiceAnyQuestion'), 0, 'L');
-
-		$posy += 15;
-		$pdf->SetXY($posx, $posy);
-		$pdf->MultiCell(190, 4, $outputlangs->transnoentities('Generalities'), 0, 'L');
-
-		$posy += 6;
-		$pdf->SetXY($posx, $posy);
-		$pdf->MultiCell(190, 4, $outputlangs->transnoentities('InvoiceMention1', $object->ref), 0, 'L');
-		$posy += 6;
-		$pdf->SetXY($posx, $posy);
-		$pdf->MultiCell(190, 4, $outputlangs->transnoentities('InvoiceMention2'), 0, 'L');
 
 		$showdetails = empty($conf->global->MAIN_GENERATE_DOCUMENTS_SHOW_FOOT_DETAILS) ? 1 : $conf->global->MAIN_GENERATE_DOCUMENTS_SHOW_FOOT_DETAILS;
 		return ''; //pdf_pagefoot($pdf, $outputlangs, 'INVOICE_FREE_TEXT', $this->emetteur, $this->marge_basse, $this->marge_gauche, $this->page_hauteur, $object, $showdetails, $hidefreetext);

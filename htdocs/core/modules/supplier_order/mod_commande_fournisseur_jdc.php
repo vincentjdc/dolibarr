@@ -23,7 +23,7 @@
  *		\brief      Fichier contenant la classe du modele de numerotation de reference de commande fournisseur Muguet
  */
 
-require_once DOL_DOCUMENT_ROOT.'/core/modules/supplier_order/modules_commandefournisseur.php';
+require_once DOL_DOCUMENT_ROOT . '/core/modules/supplier_order/modules_commandefournisseur.php';
 
 
 /**
@@ -75,7 +75,7 @@ class mod_commande_fournisseur_jdc extends ModeleNumRefSuppliersOrders
 	public function info()
 	{
 		global $langs;
-	  	return $langs->trans("JDCSupplierOrderRefModelDesc", $this->prefix);
+		return $langs->trans("JDCSupplierOrderRefModelDesc", $this->prefix);
 	}
 
 
@@ -86,9 +86,21 @@ class mod_commande_fournisseur_jdc extends ModeleNumRefSuppliersOrders
 	 */
 	public function getExample()
 	{
-		return "P21156-PO001";
+		return "P21156-PO001 (externe) ou P21156-POI001 (interne)";
 	}
 
+	public function isInternal($object)
+	{
+		global $db;
+
+		$soc = new Societe($db);
+		$soc->fetch($object->socid);
+
+		$jdcEntity = new JDCEntity($db);
+		$jdcEntity->fetch($object->array_options['options_fk_jdc_entity']);
+
+		return $jdcEntity->fk_soc == $soc->id;
+	}
 
 	/**
 	 *  Checks if the numbers already in the database do not
@@ -99,40 +111,6 @@ class mod_commande_fournisseur_jdc extends ModeleNumRefSuppliersOrders
 	public function canBeActivated()
 	{
 		return true;
-		global $conf, $langs, $db;
-
-		$coyymm = ''; $max = '';
-
-		$object->fetch_projet();
-
-                $projectRef = $object->project->ref;
-
-                $start = 9;
-                $sql = "SELECT MAX(CAST(SUBSTRING(ref FROM ".$start.") AS SIGNED)) as max";
-                $sql .= " FROM ".MAIN_DB_PREFIX."command_fournisseur";
-                $sql .= " WHERE ref LIKE '".$db->escape($projectRef)."-%'";
-
-		//$posindice = strlen($this->prefix) + 6;
-		//$sql = "SELECT MAX(CAST(SUBSTRING(ref FROM ".$posindice.") AS SIGNED)) as max";
-		//$sql .= " FROM ".MAIN_DB_PREFIX."commande_fournisseur";
-		//$sql .= " WHERE ref LIKE '".$db->escape($this->prefix)."____-%'";
-		//$sql .= " AND entity = ".$conf->entity;
-
-		$resql = $db->query($sql);
-		if ($resql)
-		{
-			$row = $db->fetch_row($resql);
-			if ($row) { $coyymm = substr($row[0], 0, 6); $max = $row[0]; }
-		}
-
-		if (!$coyymm || preg_match('/'.$this->prefix.'[0-9][0-9][0-9][0-9]/i', $coyymm))
-		{
-			return true;
-		} else {
-			$langs->load("errors");
-			$this->error = $langs->trans('ErrorNumRefModel', $max);
-			return false;
-		}
 	}
 
 	/**
@@ -150,10 +128,19 @@ class mod_commande_fournisseur_jdc extends ModeleNumRefSuppliersOrders
 
 		$projectRef = $object->project->ref;
 
-		$start = 10;
-		$sql = "SELECT MAX(CAST(SUBSTRING(ref FROM ".$start.") AS SIGNED)) as max";
-		$sql .= " FROM ".MAIN_DB_PREFIX."commande_fournisseur";
-		$sql .= " WHERE ref LIKE '".$db->escape($projectRef)."-%'";
+		$internal = $this->isInternal($object);
+
+		if (!$internal) {
+			$start = 10;
+			$sql = "SELECT MAX(CAST(SUBSTRING(ref FROM " . $start . ") AS SIGNED)) as max";
+			$sql .= " FROM " . MAIN_DB_PREFIX . "commande_fournisseur";
+			$sql .= " WHERE ref LIKE '" . $db->escape($projectRef) . "-PO%' AND ref NOT LIKE '".$db->escape($projectRef)."-POI'";
+		} else {
+			$start = 11;
+			$sql = "SELECT MAX(CAST(SUBSTRING(ref FROM " . $start . ") AS SIGNED)) as max";
+			$sql .= " FROM " . MAIN_DB_PREFIX . "commande_fournisseur";
+			$sql .= " WHERE ref LIKE '" . $db->escape($projectRef) . "-POI%'";
+		}
 
 		// First, we get the max value
 		//$posindice = strlen($this->prefix) + 6;
@@ -163,15 +150,14 @@ class mod_commande_fournisseur_jdc extends ModeleNumRefSuppliersOrders
 		//$sql .= " AND entity = ".$conf->entity;
 
 		//$date = $object->date_commande; // Not always defined
-                //if (empty($date)) {
-                //      $date = $object->date; // Creation date is order date for suppliers orders
-                //}
-                //$yymm = strftime("%y%m", $date);
+		//if (empty($date)) {
+		//      $date = $object->date; // Creation date is order date for suppliers orders
+		//}
+		//$yymm = strftime("%y%m", $date);
 
 
 		$resql = $db->query($sql);
-		if ($resql)
-		{
+		if ($resql) {
 			$obj = $db->fetch_object($resql);
 			if ($obj) $max = intval($obj->max);
 			else $max = 0;
@@ -180,7 +166,7 @@ class mod_commande_fournisseur_jdc extends ModeleNumRefSuppliersOrders
 		if ($max >= (pow(10, 4) - 1)) $num = $max + 1; // If counter > 9999, we do not format on 4 chars, we take number as it is
 		else $num = sprintf("%04s", $max + 1);
 
-		return $projectRef."-PO".$num;
+		return $projectRef . ($internal ? "-POI" : "-PO") . $num;
 	}
 
 

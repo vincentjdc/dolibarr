@@ -89,7 +89,6 @@ class mod_facture_jdc extends ModeleNumRefFactures
 	public function canBeActivated()
 	{
 		global $langs, $conf, $db;
-
 		$langs->load("bills");
 
 		return true;
@@ -105,62 +104,86 @@ class mod_facture_jdc extends ModeleNumRefFactures
 	 */
 	public function getNextValue($objsoc, $invoice, $mode = 'next')
 	{
-		global $db, $conf;
+		global $db, $conf, $langs;
 
-		$prefix = $this->prefixinvoice;
-		if ($invoice->type == 1) {
-			$prefix = $this->prefixreplacement;
-		} elseif ($invoice->type == 2) {
-			$prefix = $this->prefixcreditnote;
-		} elseif ($invoice->type == 3) {
-			$prefix = $this->prefixdeposit;
-		}
+		$date = $invoice->date; // This is invoice date (not creation date)
+		$year4digits = strftime("%Y", $date);
+		$year2digits = strftime("%y", $date);
 
-		if ($invoice->array_options['options_internal']) {
-			$prefix .= 'I';
-		}
+		// Get the entity of the invoice
+		$entityId = $invoice->array_options['options_fk_jdc_entity'];
 
 		$entity = new JdcEntity($db);
-		$entity->fetch($invoice->array_options['options_fk_jdc_entity']);
+		$entity->fetch($entityId);
 
-		$startNumber = $entity->number_start;
-		$stopNumber = $entity->number_stop;
-
-		$year = date('y', $invoice->date);
-
-		$startStr = $prefix . $year;
-
-		$start = strlen($startStr) + 1;
-
-		$sql = "SELECT MAX(CAST(SUBSTRING(ref FROM " . $start . ") AS SIGNED)) as max";
-		$sql .= " FROM " . MAIN_DB_PREFIX . "facture";
-		$sql .= " WHERE (";
-		for ($i = $startNumber; $i <= $stopNumber; $i++) {
-			if ($i > $startNumber) {
-				$sql .= ' OR ';
-			}
-			$sql .= "ref LIKE '" . $db->escape($prefix) . $year . $i . "%'";
+		$journalAttribute = 'sales_invoice_journal';
+		$journalMinAttribute = 'sales_invoice_journal_min_number';
+		$creditNote = $invoice->type == FactureFournisseur::TYPE_CREDIT_NOTE;
+		if ($creditNote) { // Credit note ?
+			$journalAttribute = 'sales_credit_note_journal';
+			$journalMinAttribute = 'sales_credit_note_journal_min_number';
 		}
-		$sql .= ")";
 
-		dol_syslog('VINCENT : ' . $sql, LOG_DEBUG);
+		$journalMask = $entity->$journalAttribute;
+		$journalMin = intval($entity->$journalMinAttribute);
+
+		// Replace Year (2 and 4 digits)
+		$journalMask = preg_replace('/\{yy\}/', $year2digits, $journalMask);
+		$journalMask = preg_replace('/\{yyyy\}/', $year4digits, $journalMask);
+
+		// Get the base
+		$journalBase = preg_replace('/\{0+\}/', '' , $journalMask);
+
+		if ($journalBase == '') {
+			$invoice->error = $langs->trans('NoJournalForThatEntity');
+			return -1;
+		}
+
+		// Fetch the last count for that base
+		$start = strlen($journalBase) + 1;
+		$sql = "SELECT MAX(CAST(SUBSTRING(ref FROM ".$start.") AS SIGNED)) as min";
+		$sql .= " FROM ".MAIN_DB_PREFIX."facture";
+		$sql .= " WHERE ref LIKE '".$db->escape($journalBase)."%'";
 
 		$resql = $db->query($sql);
+		dol_syslog(get_class($this)."::getNextValue", LOG_DEBUG);
+
 		if ($resql) {
 			$obj = $db->fetch_object($resql);
+			dol_syslog("VINCENT : ==========>" . $obj->min);
 			if ($obj) {
-				if ($obj->max !== null) {
-					$max = intval($obj->max);
-				} else {
-					$max = $startNumber * 1000;
-				}
-			} else $max = $startNumber * 1000;
+				$min = intval($obj->min);
+			} else {
+				$min = 0;
+			}
+		} else {
+			$invoice->error = 'error';
+			return -1;
 		}
 
-		if ($max >= (pow(10, 4) - 1)) $num = $max + 1; // If counter > 9999, we do not format on 4 chars, we take number as it is
-		else $num = sprintf("%04s", $max + 1);
+		$min = max($min, $journalMin);
+		//echo $sql;
+		// Replace the counter of the mask with the need one (last or next)
+		$ref = preg_replace_callback('/\{(0+)\}/', function($matches) use ($min, $mode) {
+			$numberOfDigits = strlen($matches[1]);
 
-		return $startStr . $num;
+			// Check if number is greater that the max number possible with the number of digits
+			// If it's the case, just increment without formatting. Otherwise, format with the number of digits desired
+			if ($min >= (pow(10, $numberOfDigits) - 1)) {
+				$nextNum = ($mode == 'last') ? $min : $min+1;
+			} else {
+				$nextNum = sprintf("%0".$numberOfDigits."s", ($mode == 'last') ? $min : $min+1);
+			}
+
+
+
+			return $nextNum;
+
+		}, $journalMask);
+
+		dol_syslog(get_class($this)."::getNextValue return ".$ref);
+
+		return $ref;
 	}
 
 	/**

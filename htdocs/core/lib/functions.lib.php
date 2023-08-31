@@ -8355,7 +8355,7 @@ function verifCond($strToEvaluate)
 		//$str = 'if(!('.$strToEvaluate.')) $rights = false;';
 		//dol_eval($str, 0, 1, '2'); // The dol_eval must contains all the global $xxx used into a condition
 		//var_dump($strToEvaluate);
-		$rep = dol_eval($strToEvaluate, 1, 1, '1'); // The dol_eval must contains all the global $xxx for all variables $xxx found into the string condition
+		$rep = dol_eval($strToEvaluate, 1, 1, '0'); // The dol_eval must contains all the global $xxx for all variables $xxx found into the string condition
 		$rights = (($rep && strpos($rep, 'Bad string syntax to evaluate') === false) ? true : false);
 		//var_dump($rights);
 	}

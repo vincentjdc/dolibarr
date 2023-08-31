@@ -508,6 +508,7 @@ if (empty($reshook)) {
 			} elseif (GETPOST('idprodfournprice', 'alpha') > 0) {
 				$qtytosearch = $qty; // Just to see if a price exists for the quantity. Not used to found vat.
 				//$qtytosearch = -1;	 // We force qty to -1 to be sure to find if a supplier price exist
+
 				$idprod = $productsupplier->get_buyprice(GETPOST('idprodfournprice', 'alpha'), $qtytosearch);
 				$res = $productsupplier->fetch($idprod);
 			}
@@ -2621,8 +2622,6 @@ if ($action == 'create') {
 
 		print "</div>";
 
-
-
 		if ($usercanorder && $object->statut == CommandeFournisseur::STATUS_ACCEPTED && $action == 'makeorder') {
 			// Set status to ordered (action=commande)
 			print '<!-- form to record supplier order -->'."\n";
@@ -2922,7 +2921,6 @@ if ($action == 'create') {
 		include DOL_DOCUMENT_ROOT.'/core/tpl/card_presend.tpl.php';
 	}
 }
-
 // End of page
 llxFooter();
 $db->close();

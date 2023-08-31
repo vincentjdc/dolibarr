@@ -546,13 +546,13 @@ if ($resql) {
 	}
 	// User
 	if (!empty($arrayfields['user']['checked'])) {
-		if ($user->rights->expensereport->readall || $user->rights->expensereport->lire_tous) {
+		//if ($user->rights->expensereport->readall || $user->rights->expensereport->lire_tous) {
 			print '<td class="liste_titre maxwidthonspartphone" align="left">';
 			print $form->select_dolusers($search_user, 'search_user', 1, '', 0, '', '', 0, 0, 0, '', 0, '', 'maxwidth200');
 			print '</td>';
-		} else {
+		//} else {
 			print '<td class="liste_titre">&nbsp;</td>';
-		}
+		//}
 	}
 	// Date start
 	if (!empty($arrayfields['d.date_debut']['checked'])) {

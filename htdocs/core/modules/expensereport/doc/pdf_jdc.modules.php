@@ -317,7 +317,7 @@ class pdf_jdc extends ModeleExpenseReport
 				$pdf->MultiCell(0, 3, ''); // Set interline to 3
 				$pdf->SetTextColor(0, 0, 0);
 
-				$tab_top = 95;
+				$tab_top = 105;
 				$tab_top_newpage = (empty($conf->global->MAIN_PDF_DONOTREPEAT_HEAD) ? 65 : 10);
 
 				$tab_height = $this->page_hauteur - $tab_top - $heightforfooter - $heightforfreetext;
@@ -929,6 +929,17 @@ class pdf_jdc extends ModeleExpenseReport
 					$pdf->MultiCell(96, 4, $outputlangs->transnoentities("DATE_PAIEMENT")." : ".dol_print_date($object->date_paiement, "day", false, $outputlangs), 0, 'L');
 				}
 			}
+		}
+
+		$posx = 10;
+
+		if ($object->array_options['options_type'] == 'Carte de crédit') {
+			$pdf->SetFillColor(245, 212, 66);
+			$pdf->setXY($posx, $posy + $hautcadre - 15);
+			$pdf->rect($posx, $posy + $hautcadre - 15, $this->page_largeur - $this->marge_droite - $posx, 5, 'FD');
+			$pdf->MultiCell($this->page_largeur - $this->marge_droite - $posx, 5, "Attention, cette note a été payée par carte de crédit", 1, "L");
+
+			$pdf->SetXY(null, $posy + $hautcadre + 5);
 		}
 	}
 

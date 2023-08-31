@@ -165,7 +165,7 @@ class mod_propale_jdc extends ModeleNumRefPropales
 
 		$existingPropales = $this->getExistingPropales($quotation);
 
-		$regexp = '/^D\d+\-(\d+)(?:$|\-v(\d+))/';
+		$regexp = '/^(?:D|P)\d+\-(\d+)(?:$|\-v(\d+))/';
 		$found = 0;
 		$maxVersion = 1;
 		$customerNumber = 1;
@@ -178,7 +178,7 @@ class mod_propale_jdc extends ModeleNumRefPropales
 				$maxCustomerNumber = max($maxCustomerNumber, $matches[1]);
 
 				if ($existingPropal->socid == $propal->socid) {
-					$found = $existingPropal;
+					//$found = $existingPropal;
 					$customerNumber = intval($matches[1]);
 					$maxVersion = max($maxVersion, $matches[2]);
 				}

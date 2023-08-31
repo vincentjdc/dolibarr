@@ -29,7 +29,6 @@ require_once DOL_DOCUMENT_ROOT.'/core/modules/supplier_invoice/modules_facturefo
 require_once DOL_DOCUMENT_ROOT.'/fourn/class/fournisseur.facture.class.php';
 
 
-
 /**
  *  Cactus Class of numbering models of suppliers invoices references
  */
@@ -79,7 +78,7 @@ class mod_facture_fournisseur_jdc extends ModeleNumRefSuppliersInvoices
 	 */
 	public function getExample()
 	{
-		return "FGES20210001";
+		return "FGES20230001, NCESSA23001, ... (externes)<br>ou FGESI20230001, NCESSAI23001, ... (internes)";
 	}
 
 
@@ -94,6 +93,19 @@ class mod_facture_fournisseur_jdc extends ModeleNumRefSuppliersInvoices
 		$langs->load("bills");
 
 		return true;
+	}
+
+	public function isInternal($object)
+	{
+		global $db;
+
+		$soc = new Societe($db);
+		$soc->fetch($object->socid);
+
+		$jdcEntity = new JDCEntity($db);
+		$jdcEntity->fetch($object->array_options['options_fk_jdc_entity']);
+
+		return $jdcEntity->fk_soc == $soc->id;
 	}
 
 	/**
@@ -118,16 +130,25 @@ class mod_facture_fournisseur_jdc extends ModeleNumRefSuppliersInvoices
 		$entity = new JdcEntity($db);
 		$entity->fetch($entityId);
 
-		$journalAttribute = 'invoice_journal';
-		$journalMinAttribute = 'invoice_journal_min_number';
-		$creditNote = $object->type == FactureFournisseur::TYPE_CREDIT_NOTE;
-		if ($creditNote) { // Credit note ?
-			$journalAttribute = 'credit_note_journal';
-			$journalMinAttribute = 'credit_note_journal_min_number';
+		if (!$this->isInternal($object)) {
+			$journalAttribute = 'invoice_journal';
+			$journalMinAttribute = 'invoice_journal_min_number';
+			$creditNote = $object->type == FactureFournisseur::TYPE_CREDIT_NOTE;
+			if ($creditNote) { // Credit note ?
+				$journalAttribute = 'credit_note_journal';
+				$journalMinAttribute = 'credit_note_journal_min_number';
+			}
+			$journalMin = intval($entity->$journalMinAttribute);
+		} else {
+			$journalAttribute = 'internal_invoice_journal';
+			$creditNote = $object->type == FactureFournisseur::TYPE_CREDIT_NOTE;
+			if ($creditNote) { // Credit note ?
+				$journalAttribute = 'internal_credit_note_journal';
+			}
+			$journalMin = 0;
 		}
 
 		$journalMask = $entity->$journalAttribute;
-		$journalMin = intval($entity->$journalMinAttribute);
 
 		// Replace Year (2 and 4 digits)
 		$journalMask = preg_replace('/\{yy\}/', $year2digits, $journalMask);

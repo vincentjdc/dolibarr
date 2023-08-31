@@ -9,10 +9,10 @@
  * Copyright (C) 2013		Florian Henry			<florian.henry@open-concept.pro>
  * Copyright (C) 2014-2016	Marcos García			<marcosgdf@gmail.com>
  * Copyright (C) 2015		Bahfir Abbes			<bafbes@gmail.com>
- * Copyright (C) 2015-2022	Ferran Marcet			<fmarcet@2byte.es>
+ * Copyright (C) 2015-2019	Ferran Marcet			<fmarcet@2byte.es>
  * Copyright (C) 2016-2021	Alexandre Spangaro		<aspangaro@open-dsi.fr>
  * Copyright (C) 2018       Nicolas ZABOURI			<info@inovea-conseil.com>
- * Copyright (C) 2018-2022  Frédéric France         <frederic.france@netlogic.fr>
+ * Copyright (C) 2018-2020  Frédéric France         <frederic.france@netlogic.fr>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -245,7 +245,7 @@ class FactureFournisseur extends CommonInvoice
 	public $multicurrency_total_ht;
 	public $multicurrency_total_tva;
 	public $multicurrency_total_ttc;
-	//! id of source invoice if replacement invoice or credit note
+	//! id of source var_dump($$this);invoice if replacement invoice or credit note
 	/**
 	 * @var int ID
 	 */
@@ -1041,7 +1041,6 @@ class FactureFournisseur extends CommonInvoice
 		$sql .= ' ORDER BY f.rang, f.rowid';
 
 		dol_syslog(get_class($this)."::fetch_lines", LOG_DEBUG);
-
 		$resql_rows = $this->db->query($sql);
 		if ($resql_rows) {
 			$num_rows = $this->db->num_rows($resql_rows);
@@ -1819,7 +1818,6 @@ class FactureFournisseur extends CommonInvoice
 						$this->line = $this->lines[$i];
 						$mouvP = new MouvementStock($this->db);
 						$mouvP->origin = &$this;
-						$mouvP->setOrigin($this->element, $this->id);
 						// We increase stock for product
 						$up_ht_disc = $this->lines[$i]->pu_ht;
 						if (!empty($this->lines[$i]->remise_percent) && empty($conf->global->STOCK_EXCLUDE_DISCOUNT_FOR_PMP)) {
@@ -1949,7 +1947,6 @@ class FactureFournisseur extends CommonInvoice
 					if ($this->lines[$i]->fk_product > 0) {
 						$mouvP = new MouvementStock($this->db);
 						$mouvP->origin = &$this;
-						$mouvP->setOrigin($this->element, $this->id);
 						// We increase stock for product
 						if ($this->type == FactureFournisseur::TYPE_CREDIT_NOTE) {
 							$result = $mouvP->reception($user, $this->lines[$i]->fk_product, $idwarehouse, $this->lines[$i]->qty, $this->lines[$i]->subprice, $langs->trans("InvoiceBackToDraftInDolibarr", $this->ref));
@@ -2683,6 +2680,9 @@ class FactureFournisseur extends CommonInvoice
 		}
 	}
 
+	public function getRef() {
+		return $this->ref;
+	}
 
 	/**
 	 *	Return clicable name (with picto eventually)
@@ -2699,7 +2699,7 @@ class FactureFournisseur extends CommonInvoice
 	 */
 	public function getNomUrl($withpicto = 0, $option = '', $max = 0, $short = 0, $moretitle = '', $notooltip = 0, $save_lastsearch_value = -1, $addlinktonotes = 0)
 	{
-		global $langs, $conf, $user, $hookmanager;
+		global $langs, $conf, $user;
 
 		$result = '';
 
@@ -2817,15 +2817,7 @@ class FactureFournisseur extends CommonInvoice
 				$result .= '</span>';
 			}
 		}
-		global $action;
-		$hookmanager->initHooks(array($this->element . 'dao'));
-		$parameters = array('id'=>$this->id, 'getnomurl' => &$result);
-		$reshook = $hookmanager->executeHooks('getNomUrl', $parameters, $this, $action); // Note that $action and $object may have been modified by some hooks
-		if ($reshook > 0) {
-			$result = $hookmanager->resPrint;
-		} else {
-			$result .= $hookmanager->resPrint;
-		}
+
 		return $result;
 	}
 
@@ -3687,9 +3679,9 @@ class SupplierInvoiceLine extends CommonObjectLine
 
 		if (!$error && !$notrigger) {
 			global $langs, $user;
-
 			// Call trigger
 			if ($this->call_trigger('LINEBILL_SUPPLIER_UPDATE', $user) < 0) {
+				echo 'ici ?';
 				$this->db->rollback();
 				return -1;
 			}
@@ -3903,6 +3895,7 @@ class SupplierInvoiceLine extends CommonObjectLine
 				// Call trigger
 				$result = $this->call_trigger('LINEBILL_SUPPLIER_CREATE', $user);
 				if ($result < 0) {
+					dol_syslog(get_class($this)."::VINCENT Error ".$this->error, LOG_ERR);
 					$this->db->rollback();
 					return -2;
 				}
