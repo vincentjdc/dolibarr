@@ -72,7 +72,7 @@ print '<div class="fichecenter"><div class="fichethirdleft">';
 $sql = "SELECT count(cf.rowid) as nb, fk_statut as status";
 $sql .= " FROM ".MAIN_DB_PREFIX."societe as s";
 $sql .= ", ".MAIN_DB_PREFIX."commande_fournisseur as cf";
-if (empty($user->rights->societe->client->voir) && !$socid) {
+if (!$user->hasRight("societe", "client", "voir") && !$socid) {
 	$sql .= ", ".MAIN_DB_PREFIX."societe_commerciaux as sc";
 }
 $parameters = array('alias' => ['commande_fournisseur' => 'cf']);
@@ -83,7 +83,7 @@ $sql .= " AND cf.entity IN (".getEntity('supplier_order').")";
 if ($user->socid) {
 	$sql .= ' AND cf.fk_soc = '.((int) $user->socid);
 }
-if (empty($user->rights->societe->client->voir) && !$socid) {
+if (!$user->hasRight("societe", "client", "voir") && !$socid) {
 	$sql .= " AND s.rowid = sc.fk_soc AND sc.fk_user = ".((int) $user->id);
 }
 $parameters = array('alias' => ['commande_fournisseur' => 'cf']);
@@ -183,7 +183,7 @@ if ($resql) {
  * Draft orders
  */
 
-if ((isModEnabled("fournisseur") && empty($conf->global->MAIN_USE_NEW_SUPPLIERMOD)) || isModEnabled("supplier_order")) {
+if (isModEnabled("supplier_order")) {
 	$sql = "SELECT c.rowid, c.ref, s.nom as name, s.rowid as socid";
 	$sql .= " FROM ".MAIN_DB_PREFIX."commande_fournisseur as c";
 	$sql .= " INNER JOIN ".MAIN_DB_PREFIX."societe as s ON (c.fk_soc = s.rowid)";
@@ -198,8 +198,8 @@ if ((isModEnabled("fournisseur") && empty($conf->global->MAIN_USE_NEW_SUPPLIERMO
 	if (!empty($socid)) {
 		$sql .= " AND c.fk_soc = ".((int) $socid);
 	}
-	if (empty($user->rights->societe->client->voir) && !$socid) {
-		$sql .= " AND sc.fk_user = ".((int) $user->id);
+	if (!$user->hasRight("societe", "client", "voir") && !$socid) {
+		$sql .= " AND s.rowid = sc.fk_soc AND sc.fk_user = ".((int) $user->id);
 	}
 	$parameters = array('alias' => ['commande_fournisseur' => 'c']);
 	$hookmanager->executeHooks('printFieldListWhere', $parameters, $object);
@@ -299,7 +299,7 @@ $max = 5;
 $sql = "SELECT c.rowid, c.ref, c.fk_statut as status, c.tms, c.billed, s.nom as name, s.rowid as socid";
 $sql .= " FROM ".MAIN_DB_PREFIX."commande_fournisseur as c";
 $sql .= " LEFT JOIN ".MAIN_DB_PREFIX."societe as s ON (s.rowid = c.fk_soc)";
-if (empty($user->rights->societe->client->voir) && !$socid) {
+if (!$user->hasRight("societe", "client", "voir") && !$socid) {
 	$sql .= " INNER JOIN ".MAIN_DB_PREFIX."societe_commerciaux as sc ON (sc.fk_soc = s.rowid)";
 }
 $parameters = array('alias' => ['commande_fournisseur' => 'c']);
@@ -310,7 +310,7 @@ $sql .= " WHERE c.entity IN (".getEntity('supplier_order').")";
 if (!empty($socid)) {
 	$sql .= " AND c.fk_soc = ".((int) $socid);
 }
-if (empty($user->rights->societe->client->voir) && !$socid) {
+if (!$user->hasRight("societe", "client", "voir") && !$socid) {
 	$sql .= " AND s.rowid = sc.fk_soc AND sc.fk_user = ".((int) $user->id);
 }
 $parameters = array('alias' => ['commande_fournisseur' => 'c']);
@@ -376,12 +376,12 @@ if ($resql) {
  $sql = "SELECT c.rowid, c.ref, c.fk_statut, s.nom as name, s.rowid as socid";
 $sql.=" FROM ".MAIN_DB_PREFIX."commande_fournisseur as c";
 $sql.= ", ".MAIN_DB_PREFIX."societe as s";
-if (empty($user->rights->societe->client->voir) && !$socid) $sql.= ", ".MAIN_DB_PREFIX."societe_commerciaux as sc";
+if (!$user->hasRight("societe", "client", "voir") && !$socid) $sql.= ", ".MAIN_DB_PREFIX."societe_commerciaux as sc";
 $sql.= " WHERE c.fk_soc = s.rowid";
 $sql.= " AND c.entity IN (".getEntity("supplier_order").")";
 $sql.= " AND c.fk_statut = 1";
 if ($socid) $sql.= " AND c.fk_soc = ".((int) $socid);
-if (empty($user->rights->societe->client->voir) && !$socid) $sql.= " AND s.rowid = sc.fk_soc AND sc.fk_user = " .((int) $user->id);
+if (!$user->hasRight("societe", "client", "voir") && !$socid) $sql.= " AND s.rowid = sc.fk_soc AND sc.fk_user = " .((int) $user->id);
 $sql.= " ORDER BY c.rowid DESC";
 
 $resql=$db->query($sql);

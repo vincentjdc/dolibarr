@@ -59,11 +59,12 @@ class mod_commande_fournisseur_orchidee extends ModeleNumRefSuppliersOrders
 	/**
 	 *  Returns the description of the numbering model
 	 *
-	 * 	@return     string      Texte descripif
+	 *	@param	Translate	$langs      Lang object to use for output
+	 *  @return string      			Descriptive text
 	 */
-	public function info()
+	public function info($langs)
 	{
-		global $db, $conf, $langs;
+		global $db, $langs;
 
 		// Load translation files required by the page
 		$langs->loadLangs(array("bills", "admin"));
@@ -150,7 +151,7 @@ class mod_commande_fournisseur_orchidee extends ModeleNumRefSuppliersOrders
 	 *
 	 *  @param	Societe		$objsoc     Object third party
 	 *  @param  Object	    $object		Object
-	 *  @return string      			Texte descripif
+	 *  @return string      			Descriptive text
 	 */
 	public function commande_get_num($objsoc = 0, $object = '')
 	{

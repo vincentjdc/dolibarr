@@ -29,7 +29,6 @@
  */
 class Projects extends DolibarrApi
 {
-
 	/**
 	 * @var array   $FIELDS     Mandatory fields, checked when create and update object
 	 */
@@ -42,6 +41,12 @@ class Projects extends DolibarrApi
 	 * @var Project $project {@type Project}
 	 */
 	public $project;
+
+	/**
+	 * @var Task $task {@type Task}
+	 */
+	public $task;
+
 
 	/**
 	 * Constructor
@@ -59,8 +64,8 @@ class Projects extends DolibarrApi
 	 *
 	 * Return an array with project informations
 	 *
-	 * @param       int         $id         ID of project
-	 * @return 	array|mixed data without useless information
+	 * @param   int         $id         ID of project
+	 * @return  Object              	Object with cleaned properties
 	 *
 	 * @throws 	RestException
 	 */
@@ -101,9 +106,6 @@ class Projects extends DolibarrApi
 	 */
 	public function index($sortfield = "t.rowid", $sortorder = 'ASC', $limit = 100, $page = 0, $thirdparty_ids = '', $category = 0, $sqlfilters = '')
 	{
-		global $db, $conf;
-
-
 		if (!DolibarrApiAccess::$user->rights->projet->lire) {
 			throw new RestException(401);
 		}
@@ -231,7 +233,7 @@ class Projects extends DolibarrApi
 	 *
 	 * @param int   $id                     Id of project
 	 * @param int   $includetimespent       0=Return only list of tasks. 1=Include a summary of time spent, 2=Include details of time spent lines
-	 * @return int
+	 * @return array
 	 *
 	 * @url	GET {id}/tasks
 	 */
@@ -269,10 +271,9 @@ class Projects extends DolibarrApi
 	 *
 	 * @param   int   $id             Id of project
 	 * @param   int   $userid         Id of user (0 = connected user)
+	 * @return array
 	 *
 	 * @url	GET {id}/roles
-	 *
-	 * @return int
 	 */
 	public function getRoles($id, $userid = 0)
 	{
@@ -298,11 +299,12 @@ class Projects extends DolibarrApi
 			$userp = new User($this->db);
 			$userp->fetch($userid);
 		}
-		$this->project->roles = $taskstatic->getUserRolesForProjectsOrTasks($userp, 0, $id, 0);
+		$this->project->roles = $taskstatic->getUserRolesForProjectsOrTasks($userp, null, $id, 0);
 		$result = array();
 		foreach ($this->project->roles as $line) {
 			array_push($result, $this->_cleanObjectDatas($line));
 		}
+
 		return $result;
 	}
 
