@@ -152,7 +152,7 @@ fi
 
 if [ "x${demopasshash}" != "xpassword_hash" ]
 then
-	echo '<?php echo MD5("$demopass"); ?>' > /tmp/tmp.php 
+	echo '<?php echo MD5("'$demopass'"); ?>' > /tmp/tmp.php 
 	newpass=`php -f /tmp/tmp.php`
 	rm /tmp/tmp.php
 else
@@ -174,7 +174,7 @@ if [ -s "$mydir/initdemopostsql.sql" ]; then
 	echo A file initdemopostsql.sql was found, we execute it.
 	mysql -P$port $base < "$mydir/initdemopostsql.sql"
 else
-	echo No file initdemopostsql.sql found, we extra sql action done.
+	echo No file initdemopostsql.sql found, so no extra sql action done.
 fi 
 
 

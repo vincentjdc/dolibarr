@@ -200,8 +200,9 @@ class RemiseCheque extends CommonObject
 				}
 			}
 
+			$lines = array();
+
 			if ($this->id > 0 && $this->errno == 0) {
-				$lines = array();
 				$sql = "SELECT b.rowid";
 				$sql .= " FROM ".MAIN_DB_PREFIX."bank as b";
 				$sql .= " WHERE b.fk_type = 'CHQ'";
@@ -260,7 +261,7 @@ class RemiseCheque extends CommonObject
 			$this->errno = $this->db->lasterrno();
 		}
 
-		if (!$this->errno && !empty($conf->global->MAIN_DISABLEDRAFTSTATUS)) {
+		if (!$this->errno && (getDolGlobalString('MAIN_DISABLEDRAFTSTATUS') || getDolGlobalString('MAIN_DISABLEDRAFTSTATUS_CHEQUE'))) {
 			$res = $this->validate($user);
 			//if ($res < 0) $error++;
 		}

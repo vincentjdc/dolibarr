@@ -36,6 +36,11 @@
 abstract class CommonDocGenerator
 {
 	/**
+	 * @var string Model name
+	 */
+	public $name = '';
+
+	/**
 	 * @var string Error code (or message)
 	 */
 	public $error = '';
@@ -59,6 +64,32 @@ abstract class CommonDocGenerator
 	 * @var int	If set to 1, save the fullname of generated file with path as the main doc when generating a doc with this template.
 	 */
 	public $update_main_doc_field;
+
+	/**
+	 * @var string	The name of constant to use to scan ODT files (Exemple: 'COMMANDE_ADDON_PDF_ODT_PATH')
+	 */
+	public $scandir;
+
+	public $page_hauteur;
+	public $page_largeur;
+	public $marge_gauche;
+	public $marge_droite;
+	public $marge_haute;
+	public $marge_basse;
+
+	public $option_logo;
+	public $option_tva;
+	public $option_multilang;
+	public $option_freetext;
+	public $option_draft_watermark;
+
+	public $option_modereg;
+	public $option_condreg;
+	public $option_escompte;
+	public $option_credit_note;
+
+	public $emetteur;
+
 
 	/**
 	 *	Constructor
@@ -417,15 +448,16 @@ abstract class CommonDocGenerator
 			}
 		}
 
-		$date = ($object->element == 'contrat' ? $object->date_contrat : $object->date);
+		$date = (isset($object->element) && $object->element == 'contrat' && isset($object->date_contrat)) ? $object->date_contrat : (isset($object->date) ? $object->date : null);
 
 		$resarray = array(
 			$array_key.'_id'=>$object->id,
-			$array_key.'_ref'=>$object->ref,
-			$array_key.'_ref_ext'=>$object->ref_ext,
+			$array_key.'_ref' => (property_exists($object, 'ref') ? $object->ref : ''),
+			$array_key.'_label' => (property_exists($object, 'label') ? $object->label : ''),
+			$array_key.'_ref_ext' => (property_exists($object, 'ref_ext') ? $object->ref_ext : ''),
 			$array_key.'_ref_customer'=>(!empty($object->ref_client) ? $object->ref_client : (empty($object->ref_customer) ? '' : $object->ref_customer)),
 			$array_key.'_ref_supplier'=>(!empty($object->ref_fournisseur) ? $object->ref_fournisseur : (empty($object->ref_supplier) ? '' : $object->ref_supplier)),
-			$array_key.'_source_invoice_ref'=>$invoice_source->ref,
+			$array_key.'_source_invoice_ref'=>((empty($invoice_source) || empty($invoice_source->ref)) ? '' : $invoice_source->ref),
 			// Dates
 			$array_key.'_hour'=>dol_print_date($date, 'hour'),
 			$array_key.'_date'=>dol_print_date($date, 'day'),
@@ -443,7 +475,7 @@ abstract class CommonDocGenerator
 			$array_key.'_payment_term_code'=>$object->cond_reglement_code,
 			$array_key.'_payment_term'=>($outputlangs->transnoentitiesnoconv('PaymentCondition'.$object->cond_reglement_code) != 'PaymentCondition'.$object->cond_reglement_code ? $outputlangs->transnoentitiesnoconv('PaymentCondition'.$object->cond_reglement_code) : ($object->cond_reglement_doc ? $object->cond_reglement_doc : $object->cond_reglement)),
 
-			$array_key.'_incoterms'=>(method_exists($object, 'display_incoterms') ? $object->display_incoterms() : ''),
+			$array_key.'_incoterms' => (method_exists($object, 'display_incoterms') ? $object->display_incoterms() : ''),
 
 			$array_key.'_bank_iban'=>$bank_account->iban,
 			$array_key.'_bank_bic'=>$bank_account->bic,
@@ -586,6 +618,7 @@ abstract class CommonDocGenerator
 			'line_product_label'=>(empty($line->product_label) ? '' : $line->product_label),
 			'line_product_type'=>(empty($line->product_type) ? '' : $line->product_type),
 			'line_product_barcode'=>(empty($line->product_barcode) ? '' : $line->product_barcode),
+			'line_product_desc'=>(empty($line->product_desc) ? '' : $line->product_desc),
 
 			'line_desc'=>$line->desc,
 			'line_vatrate'=>vatrate($line->tva_tx, true, $line->info_bits),
@@ -807,25 +840,38 @@ abstract class CommonDocGenerator
 	 *
 	 * @param   Object		$object    		Dolibarr Object
 	 * @param   Translate	$outputlangs    Language object for output
-	 * @param   boolean		$recursive    	Want to fetch child array or child object
+	 * @param   boolean|int	$recursive    	Want to fetch child array or child object.
 	 * @return	array						Array of substitution key->code
 	 */
-	public function get_substitutionarray_each_var_object(&$object, $outputlangs, $recursive = true)
+	public function get_substitutionarray_each_var_object(&$object, $outputlangs, $recursive = 1)
 	{
 		// phpcs:enable
 		$array_other = array();
 		if (!empty($object)) {
 			foreach ($object as $key => $value) {
+				if (in_array($key, array('db', 'fields', 'lines', 'modelpdf', 'model_pdf'))) {		// discard some properties
+					continue;
+				}
 				if (!empty($value)) {
 					if (!is_array($value) && !is_object($value)) {
 						$array_other['object_'.$key] = $value;
-					}
-					if (is_array($value) && $recursive) {
-						$array_other['object_'.$key] = $this->get_substitutionarray_each_var_object($value, $outputlangs, false);
+					} elseif (is_array($value) && $recursive) {
+						$tmparray = $this->get_substitutionarray_each_var_object($value, $outputlangs, 0);
+						foreach ($tmparray as $key2 => $value2) {
+							$array_other['object_'.$key.'_'.preg_replace('/^object_/', '', $key2)] = $value2;
+						}
+					} elseif (is_object($value) && $recursive) {
+						$tmparray = $this->get_substitutionarray_each_var_object($value, $outputlangs, 0);
+						foreach ($tmparray as $key2 => $value2) {
+							$array_other['object_'.$key.'_'.preg_replace('/^object_/', '', $key2)] = $value2;
+						}
 					}
 				}
 			}
 		}
+
+		//var_dump($array_other);
+
 		return $array_other;
 	}
 
@@ -854,7 +900,12 @@ abstract class CommonDocGenerator
 					//Add value to store price with currency
 					$array_to_fill = array_merge($array_to_fill, array($array_key.'_options_'.$key.'_currency' => $object->array_options['options_'.$key.'_currency']));
 				} elseif ($extrafields->attributes[$object->table_element]['type'][$key] == 'select') {
-					$object->array_options['options_'.$key] = $extrafields->attributes[$object->table_element]['param'][$key]['options'][$object->array_options['options_'.$key]];
+					$valueofselectkey = $object->array_options['options_'.$key];
+					if (array_key_exists($valueofselectkey, $extrafields->attributes[$object->table_element]['param'][$key]['options'])) {
+						$object->array_options['options_'.$key] = $extrafields->attributes[$object->table_element]['param'][$key]['options'][$valueofselectkey];
+					} else {
+						$object->array_options['options_'.$key] = '';
+					}
 				} elseif ($extrafields->attributes[$object->table_element]['type'][$key] == 'checkbox') {
 					$valArray = explode(',', $object->array_options['options_'.$key]);
 					$output = array();
@@ -904,7 +955,11 @@ abstract class CommonDocGenerator
 					}
 				}
 
-				$array_to_fill = array_merge($array_to_fill, array($array_key.'_options_'.$key => $object->array_options['options_'.$key]));
+				if (array_key_exists('options_'.$key, $object->array_options)) {
+					$array_to_fill = array_merge($array_to_fill, array($array_key.'_options_'.$key => $object->array_options['options_'.$key]));
+				} else {
+					$array_to_fill = array_merge($array_to_fill, array($array_key.'_options_'.$key => ''));
+				}
 			}
 		}
 
@@ -1056,7 +1111,7 @@ abstract class CommonDocGenerator
 	public function getColumnContentXStart($colKey)
 	{
 		$colDef = $this->cols[$colKey];
-		return  $colDef['xStartPos'] + $colDef['content']['padding'][3];
+		return isset($colDef['xStartPos']) ? $colDef['xStartPos'] + $colDef['content']['padding'][3] : null;
 	}
 
 	/**
@@ -1238,7 +1293,8 @@ abstract class CommonDocGenerator
 		}
 		$extrafields = $this->extrafieldsCache;
 
-		$extrafieldOutputContent = $extrafields->showOutputField($extrafieldKey, $object->array_options[$extrafieldOptionsKey], '', $object->table_element);
+		$extrafieldOutputContent = '';
+		if (isset($object->array_options[$extrafieldOptionsKey])) $extrafieldOutputContent = $extrafields->showOutputField($extrafieldKey, $object->array_options[$extrafieldOptionsKey], '', $object->table_element);
 
 		// TODO : allow showOutputField to be pdf public friendly, ex: in a link to object, clean getNomUrl to remove link and images... like a getName methode ...
 		if ($extrafields->attributes[$object->table_element]['type'][$extrafieldKey] == 'link') {
@@ -1511,17 +1567,21 @@ abstract class CommonDocGenerator
 						// set cell padding with column title definition
 						$pdf->setCellPaddings($colDef['title']['padding'][3], $colDef['title']['padding'][0], $colDef['title']['padding'][1], $colDef['title']['padding'][2]);
 					}
-
+					if (isset($colDef['title']['align'])) {
+						$align = $colDef['title']['align'];
+					} else {
+						$align = '';
+					}
 					$pdf->SetXY($colDef['xStartPos'], $tab_top);
 					$textWidth = $colDef['width'];
-					$pdf->MultiCell($textWidth, 2, $colDef['title']['label'], '', $colDef['title']['align']);
+					$pdf->MultiCell($textWidth, 2, $colDef['title']['label'], '', $align);
 
 					// Add variant of translation if $outputlangsbis is an object
 					if (is_object($outputlangsbis) && trim($colDef['title']['label'])) {
 						$pdf->setCellPaddings($colDef['title']['padding'][3], 0, $colDef['title']['padding'][1], $colDef['title']['padding'][2]);
 						$pdf->SetXY($colDef['xStartPos'], $pdf->GetY());
 						$textbis = $outputlangsbis->transnoentities($colDef['title']['textkey']);
-						$pdf->MultiCell($textWidth, 2, $textbis, '', $colDef['title']['align']);
+						$pdf->MultiCell($textWidth, 2, $textbis, '', $align);
 					}
 
 					$this->tabTitleHeight = max($pdf->GetY() - $tab_top, $this->tabTitleHeight);
@@ -1567,7 +1627,7 @@ abstract class CommonDocGenerator
 		$extrafields = $this->extrafieldsCache;
 
 
-		if (!empty($extrafields->attributes[$object->table_element]) && is_array($extrafields->attributes[$object->table_element]['label'])) {
+		if (!empty($extrafields->attributes[$object->table_element]) && is_array($extrafields->attributes[$object->table_element]) && array_key_exists('label', $extrafields->attributes[$object->table_element]) && is_array($extrafields->attributes[$object->table_element]['label'])) {
 			foreach ($extrafields->attributes[$object->table_element]['label'] as $key => $label) {
 				// Dont display separator yet even is set to be displayed (not compatible yet)
 				if ($extrafields->attributes[$object->table_element]['type'][$key] == 'separate') {

@@ -1,7 +1,7 @@
 <?php
-/* Copyright (C) 2011-2019 Alexandre Spangaro   <aspangaro@open-dsi.fr>
- * Copyright (C) 2014      Juanjo Menent        <jmenent@2byte.es>
- * Copyright (C) 2021	   Gauthier VERDOL      <gauthier.verdol@atm-consulting.fr>
+/* Copyright (C) 2011-2022  Alexandre Spangaro  <aspangaro@open-dsi.fr>
+ * Copyright (C) 2014       Juanjo Menent       <jmenent@2byte.es>
+ * Copyright (C) 2021       Gauthier VERDOL     <gauthier.verdol@atm-consulting.fr>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -164,9 +164,9 @@ class PaymentSalary extends CommonObject
 		$this->db->begin();
 
 		if ($totalamount != 0) {
-			$sql = "INSERT INTO ".MAIN_DB_PREFIX."payment_salary (fk_salary, datec, datep, amount,";
+			$sql = "INSERT INTO ".MAIN_DB_PREFIX."payment_salary (entity, fk_salary, datec, datep, amount,";
 			$sql .= " fk_typepayment, num_payment, note, fk_user_author, fk_bank)";
-			$sql .= " VALUES ($this->chid, '".$this->db->idate($now)."',";
+			$sql .= " VALUES (".((int) $conf->entity).", ".((int) $this->chid).", '".$this->db->idate($now)."',";
 			$sql .= " '".$this->db->idate($this->datepaye)."',";
 			$sql .= " ".price2num($totalamount).",";
 			$sql .= " ".((int) $this->paiementtype).", '".$this->db->escape($this->num_payment)."', '".$this->db->escape($this->note)."', ".((int) $user->id).",";
@@ -486,14 +486,14 @@ class PaymentSalary extends CommonObject
 	 */
 	public function addPaymentToBank($user, $mode, $label, $accountid, $emetteur_nom, $emetteur_banque)
 	{
-		global $conf;
+		global $conf, $langs;
 
 		// Clean data
 		$this->num_payment = trim($this->num_payment ? $this->num_payment : $this->num_paiement);
 
 		$error = 0;
 
-		if (!empty($conf->banque->enabled)) {
+		if (isModEnabled("banque")) {
 			include_once DOL_DOCUMENT_ROOT.'/compta/bank/class/account.class.php';
 
 			$acc = new Account($this->db);
@@ -701,8 +701,7 @@ class PaymentSalary extends CommonObject
 			$link = '<a href="'.DOL_URL_ROOT.'/salaries/payment_salary/card.php?id='.$this->id.'" title="'.dol_escape_htmltag($label, 1).'" class="classfortooltip">';
 			$linkend = '</a>';
 
-			if ($withpicto) $result .= ($link.img_object($label, 'payment', 'class="classfortooltip"').$linkend.' ');
-			if ($withpicto && $withpicto != 2) $result .= ' ';
+			if ($withpicto) $result .= ($link.img_object($label, 'payment', 'class="classfortooltip pictofixedwidth"').$linkend);
 			if ($withpicto != 2) $result .= $link.($maxlen ?dol_trunc($this->ref, $maxlen) : $this->ref).$linkend;
 		}
 

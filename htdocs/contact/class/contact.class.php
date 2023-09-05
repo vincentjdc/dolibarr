@@ -131,6 +131,13 @@ class Contact extends CommonObject
 	public $civility;
 
 	/**
+	 * @var string The civilite code, not an integer
+	 * @deprecated
+	 * @see $civility_code
+	 */
+	public $civilite;
+
+	/**
 	 * @var string Address
 	 */
 	public $address;
@@ -180,6 +187,12 @@ class Contact extends CommonObject
 	 * @var string
 	 */
 	public $email;
+
+	/**
+	 * URL
+	 * @var string
+	 */
+	public $url;
 
 	/**
 	 * Unsuscribe all : 1 = contact has globaly unsubscribe of all mass emailings
@@ -315,6 +328,7 @@ class Contact extends CommonObject
 	 */
 	public $stcomm_picto;
 
+
 	/**
 	 *	Constructor
 	 *
@@ -330,7 +344,7 @@ class Contact extends CommonObject
 		if (empty($conf->global->MAIN_SHOW_TECHNICAL_ID)) {
 			$this->fields['rowid']['visible'] = 0;
 		}
-		if (empty($conf->mailing->enabled)) {
+		if (!isModEnabled('mailing')) {
 			$this->fields['no_email']['enabled'] = 0;
 		}
 		// typical ['s.nom'] is used for third-parties
@@ -418,12 +432,13 @@ class Contact extends CommonObject
 	/**
 	 *  Add a contact into database
 	 *
-	 *  @param      User	$user       Object user that create
-	 *  @return     int      			<0 if KO, >0 if OK
+	 *  @param      User	$user           Object user that create
+	 *  @param      int     $notrigger	    1=Does not execute triggers, 0= execute triggers
+	 *  @return     int      			    <0 if KO, >0 if OK
 	 */
-	public function create($user)
+	public function create($user, $notrigger = 0)
 	{
-		global $conf, $langs;
+		global $conf;
 
 		$error = 0;
 		$now = dol_now();
@@ -499,7 +514,7 @@ class Contact extends CommonObject
 				}
 			}
 
-			if (!$error) {
+			if (!$error && !$notrigger) {
 				// Call trigger
 				$result = $this->call_trigger('CONTACT_CREATE', $user);
 				if ($result < 0) {
@@ -557,7 +572,6 @@ class Contact extends CommonObject
 		$this->fax = trim($this->fax);
 		$this->zip = (empty($this->zip) ? '' : trim($this->zip));
 		$this->town = (empty($this->town) ? '' : trim($this->town));
-		$this->setUpperOrLowerCase();
 		$this->country_id = ($this->country_id > 0 ? $this->country_id : $this->country_id);
 		if (empty($this->statut)) {
 			$this->statut = 0;
@@ -565,6 +579,7 @@ class Contact extends CommonObject
 		if (empty($this->civility_code) && !is_numeric($this->civility_id)) {
 			$this->civility_code = $this->civility_id; // For backward compatibility
 		}
+		$this->setUpperOrLowerCase();
 		$this->db->begin();
 
 		$sql = "UPDATE ".MAIN_DB_PREFIX."socpeople SET";
@@ -1054,7 +1069,7 @@ class Contact extends CommonObject
 				$this->phone_mobile = trim($obj->phone_mobile);
 
 				$this->email			= $obj->email;
-				$this->socialnetworks = (array) json_decode($obj->socialnetworks, true);
+				$this->socialnetworks = ($obj->socialnetworks ? (array) json_decode($obj->socialnetworks, true) : array());
 				$this->photo			= $obj->photo;
 				$this->priv				= $obj->priv;
 				$this->mail				= $obj->email;
@@ -1214,6 +1229,15 @@ class Contact extends CommonObject
 
 		$this->db->begin();
 
+		if (!$error && !$notrigger) {
+			// Call trigger
+			$result = $this->call_trigger('CONTACT_DELETE', $user);
+			if ($result < 0) {
+				$error++;
+			}
+			// End call triggers
+		}
+
 		if (!$error) {
 			// Get all rowid of element_contact linked to a type that is link to llx_socpeople
 			$sql = "SELECT ec.rowid";
@@ -1302,15 +1326,6 @@ class Contact extends CommonObject
 			if ($result < 0) {
 				$error++;
 			}
-		}
-
-		if (!$error && !$notrigger) {
-			// Call trigger
-			$result = $this->call_trigger('CONTACT_DELETE', $user);
-			if ($result < 0) {
-				$error++;
-			}
-			// End call triggers
 		}
 
 		if (!$error) {
@@ -1461,13 +1476,6 @@ class Contact extends CommonObject
 			}
 			$linkclose .= ' title="'.dol_escape_htmltag($label, 1).'"';
 			$linkclose .= ' class="classfortooltip'.($morecss ? ' '.$morecss : '').'"';
-
-			/*
-				$hookmanager->initHooks(array('contactdao'));
-				$parameters=array('id'=>$this->id);
-				$reshook=$hookmanager->executeHooks('getnomurltooltip',$parameters,$this,$action);    // Note that $action and $object may have been modified by some hooks
-				if ($reshook > 0) $linkclose = $hookmanager->resPrint;
-				*/
 		}
 
 		$linkstart = '<a href="'.$url.'"';
@@ -1693,8 +1701,8 @@ class Contact extends CommonObject
 	 * Adds it to non existing supplied categories.
 	 * Existing categories are left untouch.
 	 *
-	 * @param int[]|int $categories Category or categories IDs
-	 * @return void
+	 * @param 	int[]|int 	$categories 	Category or categories IDs
+	 * @return 	int							<0 if KO, >0 if OK
 	 */
 	public function setCategories($categories)
 	{
@@ -1782,6 +1790,8 @@ class Contact extends CommonObject
 		$sql = "SELECT sc.fk_socpeople as id, sc.fk_c_type_contact";
 		$sql .= " FROM ".MAIN_DB_PREFIX."c_type_contact tc";
 		$sql .= ", ".MAIN_DB_PREFIX."societe_contacts sc";
+		$sql .= " INNER JOIN ".MAIN_DB_PREFIX."socpeople sp";
+		$sql .= " ON sc.fk_socpeople = sp.rowid AND sp.statut = 1";
 		$sql .= " WHERE sc.fk_soc =".((int) $this->socid);
 		$sql .= " AND sc.fk_c_type_contact=tc.rowid";
 		$sql .= " AND tc.element = '".$this->db->escape($element)."'";

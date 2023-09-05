@@ -59,7 +59,7 @@ class box_supplier_orders_awaiting_reception extends ModeleBoxes
 
 		$this->db = $db;
 
-		$this->hidden = !($user->rights->fournisseur->commande->lire);
+		$this->hidden = !($user->hasRight('fournisseur', 'commande', 'lire'));
 	}
 
 	/**
@@ -186,7 +186,7 @@ class box_supplier_orders_awaiting_reception extends ModeleBoxes
 				if ($num == 0) {
 					$this->info_box_contents[$line][] = array(
 						'td' => 'class="center"',
-						'text' => $langs->trans("NoSupplierOrder"),
+						'text' => '<span class="opacitymedium">'.$langs->trans("NoSupplierOrder").'</span>',
 					);
 				}
 
@@ -201,7 +201,7 @@ class box_supplier_orders_awaiting_reception extends ModeleBoxes
 		} else {
 			$this->info_box_contents[0][] = array(
 				'td' => 'class="nohover opacitymedium left"',
-				'text' => $langs->trans("ReadPermissionNotAllowed")
+				'text' => '<span class="opacitymedium">'.$langs->trans("ReadPermissionNotAllowed").'</span>'
 			);
 		}
 	}

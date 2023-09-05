@@ -135,8 +135,13 @@ class Proposals extends DolibarrApi
 		}
 
 		// Add external contacts ids.
-		$this->propal->contacts_ids = $this->propal->liste_contact(-1, 'external', $contact_list);
+		$tmparray = $this->propal->liste_contact(-1, 'external', $contact_list);
+		if (is_array($tmparray)) {
+			$this->propal->contacts_ids = $tmparray;
+		}
+
 		$this->propal->fetchObjectLinked();
+
 		return $this->_cleanObjectDatas($this->propal);
 	}
 
@@ -199,11 +204,10 @@ class Proposals extends DolibarrApi
 		// Add sql filters
 		if ($sqlfilters) {
 			$errormessage = '';
-			if (!DolibarrApi::_checkFilters($sqlfilters, $errormessage)) {
-				throw new RestException(503, 'Error when validating parameter sqlfilters -> '.$errormessage);
+			$sql .= forgeSQLFromUniversalSearchCriteria($sqlfilters, $errormessage);
+			if ($errormessage) {
+				throw new RestException(400, 'Error when validating parameter sqlfilters -> '.$errormessage);
 			}
-			$regexstring = '\(([^:\'\(\)]+:[^:\'\(\)]+:[^\(\)]+)\)';
-			$sql .= " AND (".preg_replace_callback('/'.$regexstring.'/', 'DolibarrApi::_forge_criteria_callback', $sqlfilters).")";
 		}
 
 		$sql .= $this->db->order($sortfield, $sortorder);
@@ -228,7 +232,10 @@ class Proposals extends DolibarrApi
 				$proposal_static = new Propal($this->db);
 				if ($proposal_static->fetch($obj->rowid)) {
 					// Add external contacts ids
-					$proposal_static->contacts_ids = $proposal_static->liste_contact(-1, 'external', 1);
+					$tmparray = $proposal_static->liste_contact(-1, 'external', 1);
+					if (is_array($tmparray)) {
+						$proposal_static->contacts_ids = $tmparray;
+					}
 					$obj_ret[] = $this->_cleanObjectDatas($proposal_static);
 				}
 				$i++;
@@ -301,14 +308,14 @@ class Proposals extends DolibarrApi
 		}
 
 		if (!empty($sqlfilters)) {
-			if (!DolibarrApi::_checkFilters($sqlfilters)) {
-				throw new RestException(503, 'Error when validating parameter sqlfilters '.$sqlfilters);
+			$errormessage = '';
+			$sql = forgeSQLFromUniversalSearchCriteria($sqlfilters, $errormessage);
+			if ($errormessage) {
+				throw new RestException(400, 'Error when validating parameter sqlfilters -> '.$errormessage);
 			}
-			$regexstring = '\(([^:\'\(\)]+:[^:\'\(\)]+:[^:\(\)]+)\)';
-			$filters = " AND (".preg_replace_callback('/'.$regexstring.'/', 'DolibarrApi::_forge_criteria_callback', $sqlfilters).")";
 		}
 
-		$this->propal->getLinesArray($filters);
+		$this->propal->getLinesArray($sql);
 		$result = array();
 		foreach ($this->propal->lines as $line) {
 			array_push($result, $this->_cleanObjectDatas($line));
@@ -343,8 +350,8 @@ class Proposals extends DolibarrApi
 
 		$request_data = (object) $request_data;
 
-		$request_data->desc = checkVal($request_data->desc, 'restricthtml');
-		$request_data->label = checkVal($request_data->label);
+		$request_data->desc = sanitizeVal($request_data->desc, 'restricthtml');
+		$request_data->label = sanitizeVal($request_data->label);
 
 		$updateRes = $this->propal->addline(
 			$request_data->desc,
@@ -488,8 +495,12 @@ class Proposals extends DolibarrApi
 
 		$request_data = (object) $request_data;
 
-		$request_data->desc = checkVal($request_data->desc, 'restricthtml');
-		$request_data->label = checkVal($request_data->label);
+		if (isset($request_data->desc)) {
+			$request_data->desc = sanitizeVal($request_data->desc, 'restricthtml');
+		}
+		if (isset($request_data->label)) {
+			$request_data->label = sanitizeVal($request_data->label);
+		}
 
 		$propalline = new PropaleLigne($this->db);
 		$result = $propalline->fetch($lineid);
@@ -519,7 +530,9 @@ class Proposals extends DolibarrApi
 			isset($request_data->date_end) ? $request_data->date_end : $propalline->date_end,
 			isset($request_data->array_options) ? $request_data->array_options : $propalline->array_options,
 			isset($request_data->fk_unit) ? $request_data->fk_unit : $propalline->fk_unit,
-			isset($request_data->multicurrency_subprice) ? $request_data->multicurrency_subprice : $propalline->subprice
+			isset($request_data->multicurrency_subprice) ? $request_data->multicurrency_subprice : $propalline->subprice,
+			0,
+			isset($request_data->rang) ? $request_data->rang : $propalline->rang
 		);
 
 		if ($updateRes > 0) {
@@ -643,7 +656,7 @@ class Proposals extends DolibarrApi
 			throw new RestException(401, 'Access not allowed for login '.DolibarrApiAccess::$user->login);
 		}
 
-		$contacts = $this->invoice->liste_contact();
+		$contacts = $this->propal->liste_contact();
 
 		foreach ($contacts as $contact) {
 			if ($contact['id'] == $contactid && $contact['code'] == $type) {

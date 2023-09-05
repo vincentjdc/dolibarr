@@ -60,7 +60,7 @@ class box_factures_fourn extends ModeleBoxes
 
 		$this->db = $db;
 
-		$this->hidden = !($user->rights->fournisseur->facture->lire);
+		$this->hidden = !($user->hasRight('fournisseur', 'facture', 'lire'));
 	}
 
 	/**
@@ -99,7 +99,7 @@ class box_factures_fourn extends ModeleBoxes
 			$sql .= ", f.total_tva";
 			$sql .= ", f.total_ttc";
 			$sql .= ", f.paye, f.fk_statut as status";
-			$sql .= ', f.datef as df';
+			$sql .= ', f.datef as date';
 			$sql .= ', f.datec as datec';
 			$sql .= ', f.date_lim_reglement as datelimite, f.tms, f.type';
 			$parameters = array();
@@ -142,7 +142,7 @@ class box_factures_fourn extends ModeleBoxes
 					$objp = $this->db->fetch_object($result);
 
 					$datelimite = $this->db->jdate($objp->datelimite);
-					$date = $this->db->jdate($objp->df);
+					$date = $this->db->jdate($objp->date);
 					$datem = $this->db->jdate($objp->tms);
 
 					$facturestatic->id = $objp->facid;
@@ -150,6 +150,7 @@ class box_factures_fourn extends ModeleBoxes
 					$facturestatic->total_ht = $objp->total_ht;
 					$facturestatic->total_tva = $objp->total_tva;
 					$facturestatic->total_ttc = $objp->total_ttc;
+					$facturestatic->date = $date;
 					$facturestatic->date_echeance = $datelimite;
 					$facturestatic->statut = $objp->status;
 					$facturestatic->status = $objp->status;
@@ -201,8 +202,8 @@ class box_factures_fourn extends ModeleBoxes
 					);
 
 					$this->info_box_contents[$line][] = array(
-						'td' => 'class="right"',
-						'text' => dol_print_date($date, 'day', 'tzuserrel'),
+						'td' => 'class="center nowraponall" title="'.dol_escape_htmltag($langs->trans("DateModification").': '.dol_print_date($datem, 'dayhour', 'tzuserrel')).'"',
+						'text' => dol_print_date($datem, 'day', 'tzuserrel'),
 					);
 
 					$this->info_box_contents[$line][] = array(
