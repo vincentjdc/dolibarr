@@ -413,7 +413,9 @@ if (empty($reshook)) {
  */
 
 $product_static = new Product($db);
-$static_ws = new Workstation($db);
+if (isModEnabled('workstation')) {
+	$static_ws = new Workstation($db);
+}
 $product_fourn = new ProductFournisseur($db);
 
 $title = $langs->trans("ProductsAndServices");

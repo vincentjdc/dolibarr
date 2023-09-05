@@ -8111,6 +8111,7 @@ class Form
 			if ($filter) {     // Syntax example "(t.ref:like:'SO-%') and (t.date_creation:<:'20160101')"
 				$errormessage = '';
 				$sql .= forgeSQLFromUniversalSearchCriteria($filter, $errormessage);
+
 				if ($errormessage) {
 					return 'Error forging a SQL request from an universal criteria: ' . $errormessage;
 				}
