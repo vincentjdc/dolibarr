@@ -935,9 +935,18 @@ class pdf_jdc extends ModeleExpenseReport
 
 		if ($object->array_options['options_type'] == 'Carte de crédit') {
 			$pdf->SetFillColor(245, 212, 66);
-			$pdf->setXY($posx, $posy + $hautcadre - 15);
-			$pdf->rect($posx, $posy + $hautcadre - 15, $this->page_largeur - $this->marge_droite - $posx, 5, 'FD');
+			$pdf->setXY($posx, $posy + $hautcadre - 5);
+			$pdf->rect($posx, $posy + $hautcadre - 5, $this->page_largeur - $this->marge_droite - $posx, 5, 'FD');
 			$pdf->MultiCell($this->page_largeur - $this->marge_droite - $posx, 5, "Attention, cette note a été payée par carte de crédit", 1, "L");
+
+			$pdf->SetXY(null, $posy + $hautcadre + 5);
+		}
+
+		if ($object->array_options['options_type'] == 'Caisse chantier') {
+			$pdf->SetFillColor(245, 212, 66);
+			$pdf->setXY($posx, $posy + $hautcadre - 5);
+			$pdf->rect($posx, $posy + $hautcadre - 5, $this->page_largeur - $this->marge_droite - $posx, 5, 'FD');
+			$pdf->MultiCell($this->page_largeur - $this->marge_droite - $posx, 5, "Attention, cette note est une caisse chantier et n'est pas à payer", 1, "L");
 
 			$pdf->SetXY(null, $posy + $hautcadre + 5);
 		}
