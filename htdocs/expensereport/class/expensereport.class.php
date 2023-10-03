@@ -2203,25 +2203,13 @@ class ExpenseReport extends CommonObject
 
 		$this->db->begin();
 
-		if (!$notrigger) {
-			// Call triggers
-			$result = $this->call_trigger('EXPENSE_REPORT_DET_DELETE', $fuser);
-			if ($result < 0) {
-				$error++;
-			}
-			// End call triggers
-		}
+		$line = new ExpenseReportLine($this->db);
+		$line->fetch($rowid);
 
-		$sql = ' DELETE FROM '.MAIN_DB_PREFIX.$this->table_element_line;
-		$sql .= ' WHERE rowid = '.((int) $rowid);
+		$ret = $line->delete($fuser, $notrigger);
 
-		dol_syslog(get_class($this)."::deleteline sql=".$sql);
-		$result = $this->db->query($sql);
-
-		if (!$result || $error > 0 ) {
-			$this->error = $this->db->error();
-			dol_syslog(get_class($this)."::deleteline  Error ".$this->error, LOG_ERR);
-			$this->db->rollback();
+		if (!$ret || $ret < 0) {
+			$this->error = $line->error;
 			return -1;
 		}
 
@@ -3086,6 +3074,48 @@ class ExpenseReportLine extends CommonObjectLine
 			$this->db->rollback();
 			return -2;
 		}
+	}
+
+	/**
+	 * deleteline
+	 *
+	 * @param   int     $rowid      	Row id
+	 * @param   User    $fuser      	User
+	 * @param   int     $notrigger      1=No trigger
+	 * @return  int                 	<0 if KO, >0 if OK
+	 */
+	public function delete($fuser = '', $notrigger = 0)
+	{
+		$error=0;
+
+		$this->db->begin();
+
+		if (!$notrigger) {
+			// Call triggers
+			$result = $this->call_trigger('EXPENSE_REPORT_DET_DELETE', $fuser);
+			if ($result < 0) {
+				$error++;
+				return -1;
+			}
+			// End call triggers
+		}
+
+		$sql = ' DELETE FROM '.MAIN_DB_PREFIX.$this->table_element;
+		$sql .= ' WHERE rowid = '.((int) $this->id);
+
+		dol_syslog(get_class($this)."::delete sql=".$sql);
+		$result = $this->db->query($sql);
+
+		if (!$result || $error > 0 ) {
+			$this->error = $this->db->error();
+			dol_syslog(get_class($this)."::delete  Error ".$this->error, LOG_ERR);
+			$this->db->rollback();
+			return -1;
+		}
+
+		$this->db->commit();
+
+		return 1;
 	}
 
 	// ajouter ici comput_ ...

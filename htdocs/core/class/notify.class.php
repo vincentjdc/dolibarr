@@ -369,6 +369,10 @@ class Notify
 		global $dolibarr_main_url_root;
 		global $action;
 
+		include_once DOL_DOCUMENT_ROOT.'/core/class/html.formmail.class.php';
+						$formmail = new FormMail($this->db);
+						$arraydefaultmessage = null;
+
 		if (!is_object($hookmanager)) {
 			include_once DOL_DOCUMENT_ROOT.'/core/class/hookmanager.class.php';
 			$hookmanager = new HookManager($this->db);
@@ -609,9 +613,7 @@ class Notify
 							break;
 						}
 
-						include_once DOL_DOCUMENT_ROOT.'/core/class/html.formmail.class.php';
-						$formmail = new FormMail($this->db);
-						$arraydefaultmessage = null;
+
 
 						if (!empty($labeltouse)) $arraydefaultmessage = $formmail->getEMailTemplate($this->db, $object_type.'_send', $user, $outputlangs, 0, 1, $labeltouse);
 						if (!empty($labeltouse) && is_object($arraydefaultmessage) && $arraydefaultmessage->id > 0) {
