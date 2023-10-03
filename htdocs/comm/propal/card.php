@@ -2136,9 +2136,12 @@ if ($action == 'create') {
 	/*
 	 * Show object in view mode
 	 */
-
-	$soc = new Societe($db);
-	$soc->fetch($object->socid);
+	$object->fetch_thirdparty();
+	if ($object->thirdparty) {
+		$soc = $object->thirdparty;
+	} else {
+		$soc = new Societe($db);
+	}
 
 	$head = propal_prepare_head($object);
 	print dol_get_fiche_head($head, 'comm', $langs->trans('Proposal'), -1, 'propal');

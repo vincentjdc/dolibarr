@@ -1290,22 +1290,34 @@ abstract class CommonObject
 		// phpcs:enable
 		global $user;
 
+		$error = 0;
 
 		$this->db->begin();
 
-		$sql = "DELETE FROM ".$this->db->prefix()."element_contact";
-		$sql .= " WHERE rowid = ".((int) $rowid);
-
-		dol_syslog(get_class($this)."::delete_contact", LOG_DEBUG);
-		if ($this->db->query($sql)) {
-			if (!$notrigger) {
-				$result = $this->call_trigger(strtoupper($this->element).'_DELETE_CONTACT', $user);
-				if ($result < 0) {
-					$this->db->rollback();
-					return -1;
-				}
+		if (!$error && empty($notrigger)) {
+			// Call trigger
+			$this->context['contact_id'] = ((int) $rowid);
+			$result = $this->call_trigger(strtoupper($this->element).'_DELETE_CONTACT', $user);
+			if ($result < 0) {
+				$error++;
 			}
+			// End call triggers
+		}
 
+		if (!$error) {
+			dol_syslog(get_class($this)."::delete_contact", LOG_DEBUG);
+
+			$sql = "DELETE FROM ".MAIN_DB_PREFIX."element_contact";
+			$sql .= " WHERE rowid = ".((int) $rowid);
+
+			$result = $this->db->query($sql);
+			if (!$result) {
+				$error++;
+				$this->errors[] = $this->db->lasterror();
+			}
+		}
+
+		if (!$error) {
 			$this->db->commit();
 			return 1;
 		} else {
@@ -5516,7 +5528,7 @@ abstract class CommonObject
 					$arrayofrecords = array(); // The write_file of templates of adherent class need this var
 					$resultwritefile = $obj->write_file($this, $outputlangs, $srctemplatepath, 'member', 1, $moreparams);
 				} else {
-					 $resultwritefile = $obj->write_file($this, $outputlangs, $srctemplatepath, $hidedetails, $hidedesc, $hideref, $moreparams);
+					$resultwritefile = $obj->write_file($this, $outputlangs, $srctemplatepath, $hidedetails, $hidedesc, $hideref, $moreparams);
 				}
 				// After call of write_file $obj->result['fullpath'] is set with generated file. It will be used to update the ECM database index.
 
@@ -8431,23 +8443,25 @@ abstract class CommonObject
 
 	/**
 	 * Returns the rights used for this class
-	 * @return stdClass
+	 * @return array		Array of permission for the module
 	 */
 	public function getRights()
 	{
 		global $user;
 
+		$module = empty($this->module) ? '' : $this->module;
 		$element = $this->element;
+
 		if ($element == 'facturerec') {
 			$element = 'facture';
 		} elseif ($element == 'invoice_supplier_rec') {
-			return $user->rights->fournisseur->facture;
-		} elseif (!empty($user->rights->{$this->module}->{$element})) {
+			return empty($user->rights->fournisseur->facture) ? null : $user->rights->fournisseur->facture;
+		} elseif ($module && !empty($user->rights->$module->$element)) {
 			// for modules built with ModuleBuilder
-			return $user->rights->{$this->module}->{$element};
+			return $user->rights->$module->$element;
 		}
 
-		return $user->rights->{$element};
+		return $user->rights->$element;
 	}
 
 	/**
