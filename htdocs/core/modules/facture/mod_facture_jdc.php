@@ -110,27 +110,51 @@ class mod_facture_jdc extends ModeleNumRefFactures
 		$year4digits = strftime("%Y", $date);
 		$year2digits = strftime("%y", $date);
 
+		$month4digits = strftime("%M", $date);
+		$month2digits = strftime("%m", $date);
+
 		// Get the entity of the invoice
 		$entityId = $invoice->array_options['options_fk_jdc_entity'];
 
 		$entity = new JdcEntity($db);
 		$entity->fetch($entityId);
 
-		$journalAttribute = 'sales_invoice_journal';
-		$journalMinAttribute = 'sales_invoice_journal_min_number';
 		$creditNote = $invoice->type == FactureFournisseur::TYPE_CREDIT_NOTE;
-		if ($creditNote) { // Credit note ?
-			$journalAttribute = 'sales_credit_note_journal';
-			$journalMinAttribute = 'sales_credit_note_journal_min_number';
+
+		$journal = new AccountancyJournal($db);
+		$journal->fetch($invoice->array_options['options_fk_accountancy_journal']);
+
+		$journalMask = $journal->number_format;
+		$journalMin = intval($journal->number_start);
+
+		if ($journal->nature != 'SALES') {
+			$invoice->error = $langs->trans('SelectedJournalIsNotPurchaseJournal');
+			return -1;
 		}
 
-		$journalMask = $entity->$journalAttribute;
-		$journalMin = intval($entity->$journalMinAttribute);
+		if ($journal->fk_jdc_entity != $entityId) {
+			$invoice->error = $langs->trans('JournalEntityMismatch');
+			return -1;
+		}
+
+		if ($creditNote) {
+			if ($journal->document_type != 'CREDIT_NOTE') {
+				$invoice->error = $langs->trans('JournalDocumentTypeMismatch');
+				return -1;
+			}
+		} else {
+			if ($journal->document_type != 'INVOICE') {
+				$invoice->error = $langs->trans('JournalDocumentTypeMismatch');
+				return -1;
+			}
+		}
 
 		// Replace Year (2 and 4 digits)
 		$journalMask = preg_replace('/\{yy\}/', $year2digits, $journalMask);
 		$journalMask = preg_replace('/\{yyyy\}/', $year4digits, $journalMask);
 
+		$journalMask = preg_replace('/\{mm\}/', $month2digits, $journalMask);
+		$journalMask = preg_replace('/\{mmmm\}/', $month4digits, $journalMask);
 		// Get the base
 		$journalBase = preg_replace('/\{0+\}/', '' , $journalMask);
 
@@ -174,9 +198,6 @@ class mod_facture_jdc extends ModeleNumRefFactures
 			} else {
 				$nextNum = sprintf("%0".$numberOfDigits."s", ($mode == 'last') ? $min : $min+1);
 			}
-
-
-
 			return $nextNum;
 
 		}, $journalMask);

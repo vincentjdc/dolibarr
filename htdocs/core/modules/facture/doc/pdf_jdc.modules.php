@@ -2007,13 +2007,13 @@ class pdf_jdc extends ModelePDFFactures
 		$pdf->MultiCell(10, 4, 'IBAN:', 0, $ltrdirection);
 		$posx += 10;
 		$pdf->SetXY($posx + 2, $posy + 3);
-		$pdf->MultiCell(40, 4, $bank, 0, $ltrdirection);
+		$pdf->MultiCell(30, 4, $bank, 0, $ltrdirection);
 		$posx += 40;
 		$pdf->SetXY($posx + 2, $posy + 3);
 		$pdf->SetFont('', 'B', $default_font_size);
-		$pdf->MultiCell(40, 4, $iban, 0, $ltrdirection);
+		$pdf->MultiCell(70, 4, $iban, 0, $ltrdirection);
 
-		$posx += 50;
+		$posx += 70;
 		$pdf->SetFont('', '', $default_font_size);
 		$pdf->SetXY($posx + 2, $posy + 3);
 		$pdf->MultiCell(30, 4, 'BIC-SWIFT:', 0, $ltrdirection);
@@ -2021,7 +2021,6 @@ class pdf_jdc extends ModelePDFFactures
 		$pdf->SetXY($posx + 2, $posy + 3);
 		$pdf->SetFont('', 'B', $default_font_size);
 		$pdf->MultiCell(40, 4, $bic, 0, $ltrdirection);
-
 
 		$posx = $this->page_largeur - $this->marge_droite - $widthrecbox;
 		$posy += 9;

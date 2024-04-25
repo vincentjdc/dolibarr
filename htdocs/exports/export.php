@@ -1190,6 +1190,7 @@ if ($step == 5 && $datatoexport) {
 	$htmltabloflibs .= '</tr>'."\n";
 
 	$liste = $objmodelexport->liste_modeles($db);
+	//print_r($liste);
 	$listeall = $liste;
 	foreach ($listeall as $key => $val) {
 		if (preg_match('/__\(Disabled\)__/', $listeall[$key])) {

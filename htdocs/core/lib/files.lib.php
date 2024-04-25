@@ -1188,6 +1188,7 @@ function dol_move_uploaded_file($src_file, $dest_file, $allowoverwrite, $disable
 
 	if ($reshook < 0) {	// At least one blocking error returned by one hook
 		$errmsg = join(',', $hookmanager->errors);
+
 		if (empty($errmsg)) {
 			$errmsg = 'ErrorReturnedBySomeHooks'; // Should not occurs. Added if hook is bugged and does not set ->errors when there is error.
 		}

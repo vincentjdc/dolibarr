@@ -2357,6 +2357,8 @@ class Facture extends CommonInvoice
 		$sql .= " retained_warranty_fk_cond_reglement=".(isset($this->retained_warranty_fk_cond_reglement) ?intval($this->retained_warranty_fk_cond_reglement) : "null");
 		$sql .= " WHERE rowid=".((int) $this->id);
 
+		echo $sql;
+
 		$this->db->begin();
 
 		dol_syslog(get_class($this)."::update", LOG_DEBUG);

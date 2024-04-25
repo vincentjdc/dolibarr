@@ -35,7 +35,8 @@ require_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/functions2.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/pdf.lib.php';
-
+require_once DOL_DOCUMENT_ROOT.'/core/class/ccountry.class.php';
+require_once DOL_DOCUMENT_ROOT.'/custom/jdc/class/jdcentity.class.php';
 
 /**
  *	Class to generate PDF orders with template Einstein
@@ -243,6 +244,16 @@ class pdf_jdc extends ModelePDFCommandes
 			$outputlangsbis->setDefaultLang($conf->global->PDF_USE_ALSO_LANGUAGE_CODE);
 			$outputlangsbis->loadLangs(array("main", "dict", "companies", "bills", "products", "orders", "deliveries"));
 		}
+
+		// Get source company
+		$this->emetteur = new JdcEntity($db);
+		$this->emetteur->fetch($object->array_options['options_fk_jdc_entity']);
+		if (empty($this->emetteur->country_code)) {
+			$country = new Ccountry($db);
+			$country->fetch($this->emetteur->country);
+			$this->emetteur->country_code = $country->code;  // By default, if was not defined
+		}
+		$this->emetteur->name = $this->emetteur->label;
 
 		$nblines = count($object->lines);
 
@@ -1353,6 +1364,7 @@ class pdf_jdc extends ModelePDFCommandes
 			$pdf->SetTextColor(0, 0, 60);
 			$pdf->MultiCell($w, 3, $outputlangs->transnoentities("RefCustomer")." : ".$outputlangs->convToOutputCharset($object->ref_client), '', 'R');
 		}
+		$posy = $pdf->getY();
 
 		if (!empty($conf->global->PDF_SHOW_PROJECT_TITLE)) {
 			$object->fetch_projet();
@@ -1421,7 +1433,8 @@ class pdf_jdc extends ModelePDFCommandes
 				$carac_emetteur .= ($carac_emetteur ? "\n" : '').$labelbeforecontactname." ".$outputlangs->convToOutputCharset($object->user->getFullName($outputlangs))."\n";
 			}
 
-			$carac_emetteur .= pdf_build_address($outputlangs, $this->emetteur, $object->thirdparty, '', 0, 'source', $object);
+			$carac_emetteur = pdf_build_address($outputlangs, $this->emetteur, null, '', 0, 'source', $object);
+			//$carac_emetteur .= pdf_build_address($outputlangs, $this->emetteur, $object->thirdparty, '', 0, 'source', $object);
 
 			// Show sender
 			$posy = 42 + $top_shift;
@@ -1447,7 +1460,7 @@ class pdf_jdc extends ModelePDFCommandes
 			if (empty($conf->global->MAIN_PDF_HIDE_SENDER_NAME)) {
 				$pdf->SetXY($posx + 2, $posy + 3);
 				$pdf->SetFont('', 'B', $default_font_size);
-				$pdf->MultiCell(80, 4, $outputlangs->convToOutputCharset($this->emetteur->name), 0, $ltrdirection);
+				$pdf->MultiCell(80, 4, $outputlangs->convToOutputCharset($this->emetteur->label), 0, $ltrdirection);
 				$posy = $pdf->getY();
 			}
 
@@ -1455,7 +1468,14 @@ class pdf_jdc extends ModelePDFCommandes
 			$pdf->SetXY($posx + 2, $posy);
 			$pdf->SetFont('', '', $default_font_size - 1);
 			$pdf->MultiCell(80, 4, $carac_emetteur, 0, 'L');
+			$posy = $pdf->getY();
 
+			// Show send VAT
+			$pdf->SetXY($posx + 2, $posy);
+			$pdf->SetTextColor(255, 0, 0);
+			$pdf->MultiCell(80, 4, $outputlangs->transnoentities("VAT").": ".$this->emetteur->tva_intra, 0, "L");
+			$pdf->SetTextColor(0, 0, 0);
+			$posy = $pdf->getY();
 
 			// If CUSTOMER contact defined, we use it
 			$usecontact = false;

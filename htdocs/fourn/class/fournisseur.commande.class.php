@@ -3607,6 +3607,8 @@ class CommandeFournisseurLigne extends CommonOrderLine
 	public $ref_supplier;
 	public $remise;
 
+	public $fk_fournprice;
+
 
 	/**
 	 *	Constructor

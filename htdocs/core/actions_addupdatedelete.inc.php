@@ -300,6 +300,20 @@ if ($action == 'update' && !empty($permissiontoadd)) {
 	}
 }
 
+if ($action == 'set_as_draft' && !empty($permissiontosetasdraft)) {
+	$db->begin();
+
+	$result = $object->setDraft($user);
+	if ($result >= 0) {
+		$db->commit();
+	} else {
+		$db->rollback();
+		$error++;
+		setEventMessages($object->error, $object->errors, 'errors');
+	}
+	$action = '';
+}
+
 // Action to update one modulebuilder field
 $reg = array();
 if (preg_match('/^set(\w+)$/', $action, $reg) && GETPOST('id', 'int') > 0 && !empty($permissiontoadd)) {

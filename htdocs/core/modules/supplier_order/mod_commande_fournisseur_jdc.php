@@ -93,6 +93,10 @@ class mod_commande_fournisseur_jdc extends ModeleNumRefSuppliersOrders
 	{
 		global $db;
 
+		if (!isset($object->array_options['options_fk_jdc_entity'])) {
+			return false;
+		}
+
 		$soc = new Societe($db);
 		$soc->fetch($object->socid);
 
@@ -126,6 +130,11 @@ class mod_commande_fournisseur_jdc extends ModeleNumRefSuppliersOrders
 
 		$object->fetch_projet();
 
+		if (!$object->project) {
+			return 'bof';
+			//throw new \Exception('No project found for this order');
+		}
+
 		$projectRef = $object->project->ref;
 
 		$internal = $this->isInternal($object);
@@ -134,12 +143,12 @@ class mod_commande_fournisseur_jdc extends ModeleNumRefSuppliersOrders
 			$start = 10;
 			$sql = "SELECT MAX(CAST(SUBSTRING(ref FROM " . $start . ") AS SIGNED)) as max";
 			$sql .= " FROM " . MAIN_DB_PREFIX . "commande_fournisseur";
-			$sql .= " WHERE ref LIKE '" . $db->escape($projectRef) . "-PO%' AND ref NOT LIKE '".$db->escape($projectRef)."-POI'";
+			$sql .= " WHERE ref LIKE '" . $db->escape($projectRef) . "-PO%' AND ref NOT LIKE '".$db->escape($projectRef)."-I-PO'";
 		} else {
 			$start = 11;
 			$sql = "SELECT MAX(CAST(SUBSTRING(ref FROM " . $start . ") AS SIGNED)) as max";
 			$sql .= " FROM " . MAIN_DB_PREFIX . "commande_fournisseur";
-			$sql .= " WHERE ref LIKE '" . $db->escape($projectRef) . "-POI%'";
+			$sql .= " WHERE ref LIKE '" . $db->escape($projectRef) . "-I-PO%'";
 		}
 
 		// First, we get the max value
@@ -166,7 +175,7 @@ class mod_commande_fournisseur_jdc extends ModeleNumRefSuppliersOrders
 		if ($max >= (pow(10, 4) - 1)) $num = $max + 1; // If counter > 9999, we do not format on 4 chars, we take number as it is
 		else $num = sprintf("%04s", $max + 1);
 
-		return $projectRef . ($internal ? "-POI" : "-PO") . $num;
+		return $projectRef . ($internal ? "-I-PO" : "-PO") . $num;
 	}
 
 

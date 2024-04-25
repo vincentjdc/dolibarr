@@ -728,7 +728,7 @@ class pdf_jdc extends ModelePDFSuppliersOrders
 
 		$posxval = 48;
 
-		$object->fetch_optionals($rowid, $extralabels);
+		//$object->fetch_optionals($rowid, $extralabels);
 		$delivery_address = $outputlangs->convToOutputCharset($object->array_options['options_delivery_address']);
 		$delivery_address_line_count = count(preg_split('/\n/', $delivery_address));
 
@@ -1342,7 +1342,7 @@ class pdf_jdc extends ModelePDFSuppliersOrders
 			$userExtrafields = new ExtraFields($this->db);
 			$userExtralabels = $userExtrafields->fetch_name_optionals_label($user->table_element);
 
-			$user->fetch_optionals($user->user_author_id, $userExtralabels);
+			//$user->fetch_optionals($user->user_author_id, $userExtralabels);
 			$phoneNumber = $outputlangs->convToOutputCharset($user->array_options['options_entity_phone_number']);
 			$email = $outputlangs->convToOutputCharset($user->array_options['options_entity_email']);
 

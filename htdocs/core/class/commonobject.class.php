@@ -7445,7 +7445,7 @@ abstract class CommonObject
 		$objectid = $this->id;	// Not used ???
 
 		$label = empty($val['label']) ? '' : $val['label'];
-		$type  = empty($val['type']) ? '' : $val['ty²pe'];
+		$type  = empty($val['type']) ? '' : $val['type'];
 		$size  = empty($val['css']) ? '' : $val['css'];
 		$reg = array();
 
@@ -8128,6 +8128,7 @@ abstract class CommonObject
 					if ($perms && isset($extrafields->attributes[$this->table_element]['perms'][$key])) {
 						$perms = dol_eval($extrafields->attributes[$this->table_element]['perms'][$key], 1, 1, '2');
 					}
+
 
 					if (($mode == 'create') && abs($visibility) != 1 && abs($visibility) != 3) {
 						continue; // <> -1 and <> 1 and <> 3 = not visible on forms, only on list

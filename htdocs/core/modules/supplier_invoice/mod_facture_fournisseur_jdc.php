@@ -124,35 +124,51 @@ class mod_facture_fournisseur_jdc extends ModeleNumRefSuppliersInvoices
 		$year4digits = strftime("%Y", $date);
 		$year2digits = strftime("%y", $date);
 
+		$creationdate = time();
+		$month2digits = strftime("%m", $creationdate);
+
 		// Get the entity of the invoice
 		$entityId = $object->array_options['options_fk_jdc_entity'];
 
 		$entity = new JdcEntity($db);
 		$entity->fetch($entityId);
 
-		if (!$this->isInternal($object)) {
-			$journalAttribute = 'invoice_journal';
-			$journalMinAttribute = 'invoice_journal_min_number';
-			$creditNote = $object->type == FactureFournisseur::TYPE_CREDIT_NOTE;
-			if ($creditNote) { // Credit note ?
-				$journalAttribute = 'credit_note_journal';
-				$journalMinAttribute = 'credit_note_journal_min_number';
-			}
-			$journalMin = intval($entity->$journalMinAttribute);
-		} else {
-			$journalAttribute = 'internal_invoice_journal';
-			$creditNote = $object->type == FactureFournisseur::TYPE_CREDIT_NOTE;
-			if ($creditNote) { // Credit note ?
-				$journalAttribute = 'internal_credit_note_journal';
-			}
-			$journalMin = 0;
+		$creditNote = $object->type == FactureFournisseur::TYPE_CREDIT_NOTE;
+
+		$journal = new AccountancyJournal($db);
+		$journal->fetch($object->array_options['options_fk_accountancy_journal']);
+
+		$journalMin = intval($journal->number_start);
+
+		if ($journal->nature != 'PURCHASE') {
+			$object->error = $langs->trans('SelectedJournalIsNotPurchaseJournal');
+			return -1;
 		}
 
-		$journalMask = $entity->$journalAttribute;
+		if ($journal->fk_jdc_entity != $entityId) {
+			$object->error = $langs->trans('JournalEntityMismatch');
+			return -1;
+		}
+
+		if ($creditNote) {
+			if ($journal->document_type != 'CREDIT_NOTE') {
+				$object->error = $langs->trans('JournalDocumentTypeMismatch');
+				return -1;
+			}
+		} else {
+			if ($journal->document_type != 'INVOICE') {
+				$object->error = $langs->trans('JournalDocumentTypeMismatch');
+				return -1;
+			}
+		}
+
+		$journalMask = $journal->number_format;
 
 		// Replace Year (2 and 4 digits)
 		$journalMask = preg_replace('/\{yy\}/', $year2digits, $journalMask);
 		$journalMask = preg_replace('/\{yyyy\}/', $year4digits, $journalMask);
+
+		$journalMask = preg_replace('/\{mm\}/', $month2digits, $journalMask);
 
 		// Get the base
 		$journalBase = preg_replace('/\{0+\}/', '' , $journalMask);
@@ -167,6 +183,7 @@ class mod_facture_fournisseur_jdc extends ModeleNumRefSuppliersInvoices
 		$sql = "SELECT MAX(CAST(SUBSTRING(ref FROM ".$start.") AS SIGNED)) as min";
 		$sql .= " FROM ".MAIN_DB_PREFIX."facture_fourn";
 		$sql .= " WHERE ref LIKE '".$db->escape($journalBase)."%'";
+
 
 		$resql = $db->query($sql);
 		dol_syslog(get_class($this)."::getNextValue", LOG_DEBUG);
