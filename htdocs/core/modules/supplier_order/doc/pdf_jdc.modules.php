@@ -747,7 +747,7 @@ class pdf_jdc extends ModelePDFSuppliersOrders
 			$heightrecbox += 2;
 		}
 
-		$pdf->SetDrawColor(192, 192, 192);
+		$pdf->SetFillColor(230, 230, 230);
 		$pdf->Rect($this->marge_gauche, $posy, $widthrecbox, $heightrecbox, 'FD');
 
 		$posy += 2;
@@ -1212,16 +1212,26 @@ class pdf_jdc extends ModelePDFSuppliersOrders
 		$pdf->SetXY(50, 26);
 		$pdf->SetTextColor(255, 255, 255);
 		$pdf->SetFillColor(255, 0, 0);
-		$pdf->Rect(50, 25, 150, 14, "F");
-		$pdf->SetFillColor(230, 230, 230);
-		$pdf->writeHTMLCell(150, 4, 50, 26, '<b>'.$outputlangs->transnoentities('NewAddress').'</b>');
+		//$pdf->Rect(50, 25, 150, 14, "F");
+		//$pdf->SetFillColor(230, 230, 230);
+		//$pdf->writeHTMLCell(150, 4, 50, 26, '<b>'.$outputlangs->transnoentities('NewAddress').'</b>');
 		//$pdf->SetDrawColor(128, 128, 128);
 		$pdf->SetTextColor(0, 0, 0);
 
+		$reference = $object->ref;
+		if ($object->array_options['options_fk_accountancy_project']) {
+			$accountancyProject = new Project($object->db);
+			$accountancyProject->fetch($object->array_options['options_fk_accountancy_project']);
+
+			preg_match('/(PO.*)$/', $reference, $matches);
+
+			$reference = $accountancyProject->ref . '_'.$matches[1];
+		}
+
 		$pdf->SetFont('', 'B', $default_font_size + 3);
-		$pdf->SetXY($posx, $posy);
+		$pdf->SetXY($posx, $posy-1);
 		$pdf->SetTextColor(0, 0, 60);
-		$title = $outputlangs->transnoentities("SupplierOrder") . " " . $outputlangs->convToOutputCharset($object->ref);
+		$title = $outputlangs->transnoentities("SupplierOrder") . " " . $outputlangs->convToOutputCharset($reference);
 		$pdf->MultiCell(100, 3, $title, '', 'R');
 		$posy += 1;
 
@@ -1348,11 +1358,11 @@ class pdf_jdc extends ModelePDFSuppliersOrders
 
 			$posy += 2;
 			$pdf->SetXY($posx + 2, $posy);
-			$pdf->MultiCell(80, 4, $outputlangs->transnoentities("PhoneShort") . ": " . $phoneNumber, 0, "L");
+			$pdf->MultiCell(80, 4, $outputlangs->transnoentities("PhoneShort") . ": " . $this->emetteur->phone, 0, "L");
 			$posy = $pdf->getY();
 
 			$pdf->SetXY($posx + 2, $posy);
-			$pdf->MultiCell(80, 4, $outputlangs->transnoentities("Email") . ": " . $email, 0, "L");
+			$pdf->MultiCell(80, 4, $outputlangs->transnoentities("Email") . ": " . $this->emetteur->sales_email, 0, "L");
 			$posy = $pdf->getY();
 
 			// Show send VAT
@@ -1370,7 +1380,6 @@ class pdf_jdc extends ModelePDFSuppliersOrders
 				$usecontact = true;
 				$result = $object->fetch_contact($arrayidcontact[0]);
 			}
-
 
 			// Recipient name
 			if ($usecontact && ($object->contact->fk_soc != $object->thirdparty->id && (!isset($conf->global->MAIN_USE_COMPANY_NAME_OF_CONTACT) || !empty($conf->global->MAIN_USE_COMPANY_NAME_OF_CONTACT)))) {

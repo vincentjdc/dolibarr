@@ -42,7 +42,7 @@ require_once DOL_DOCUMENT_ROOT.'/custom/jdc/class/jdcentity.class.php';
 /**
  *	Class to generate the customer invoice PDF with template JDC
  */
-class pdf_jdc extends ModelePDFFactures
+class pdf_fse extends ModelePDFFactures
 {
 	 /**
 	  * @var DoliDb Database handler
@@ -146,8 +146,8 @@ class pdf_jdc extends ModelePDFFactures
 		$langs->loadLangs(array("main", "bills", "jdc@jdc"));
 
 		$this->db = $db;
-		$this->name = "JDC";
-		$this->description = $langs->trans('PDFJDCDescription');
+		$this->name = "FSE";
+		$this->description = $langs->trans('PDFFSEDescription');
 		$this->update_main_doc_field = 1; // Save the name of generated file as the main doc when generating a doc with this template
 
 		// Dimension page
@@ -341,9 +341,9 @@ class pdf_jdc extends ModelePDFFactures
 					$heightforinfotot = 220;
 				}
 				$heightforfreetext = (isset($conf->global->MAIN_PDF_FREETEXT_HEIGHT) ? $conf->global->MAIN_PDF_FREETEXT_HEIGHT : 5); // Height reserved to output the free text on last page
-				$heightforfooter = $this->marge_basse + 8; // Height reserved to output the footer (value include bottom margin)
+				$heightforfooter = $this->marge_basse + 30; // Height reserved to output the footer (value include bottom margin)
 				if (!empty($conf->global->MAIN_GENERATE_DOCUMENTS_SHOW_FOOT_DETAILS)) {
-					$heightforfooter += 8;
+					$heightforfooter += 6;
 				}
 
 				if (class_exists('TCPDF')) {
@@ -1936,6 +1936,11 @@ class pdf_jdc extends ModelePDFFactures
 			$pdf->SetTextColor(0, 0, 0);
 			$posy = $pdf->getY();
 
+            $rcs = "813 207 842";
+			$pdf->SetXY($posx + 2, $posy);
+			$pdf->MultiCell(80, 4, $outputlangs->transnoentities("R.C.S. Valenciennes").": ".$rcs, 0, "L");
+			$posy = $pdf->getY();
+
 			// If BILLING contact defined on invoice, we use it
 			$usecontact = false;
 			$arrayidcontact = $object->getIdContact('external', 'BILLING');
@@ -1988,8 +1993,6 @@ class pdf_jdc extends ModelePDFFactures
 			$pdf->SetFont('', '', $default_font_size - 1);
 			$pdf->SetXY($posx + 2, $posy);
 			$pdf->MultiCell($widthrecbox - 2, 4, $carac_client, 0, $ltrdirection);
-		} else {
-			$toptabley = $pdf->getY() + 24;
 		}
 
 		$posy = $pdf->getY();
@@ -1999,7 +2002,6 @@ class pdf_jdc extends ModelePDFFactures
 		$widthrecbox = 190;
 		$posx = $this->page_largeur - $this->marge_droite - $widthrecbox;
 		$posy = $toptabley;
-		$pdf->SetTextColor('black');
 		$pdf->SetXY($posx + 2, $posy + 3);
 		$iban = $this->emetteur->bank_account;
 		$bank = $this->emetteur->bank_name;
@@ -2007,7 +2009,7 @@ class pdf_jdc extends ModelePDFFactures
 		$pdf->MultiCell(10, 4, 'IBAN:', 0, $ltrdirection);
 		$posx += 10;
 		$pdf->SetXY($posx + 2, $posy + 3);
-		$pdf->MultiCell(30, 4, $bank, 0, $ltrdirection);
+		$pdf->MultiCell(40, 4, $bank, 0, $ltrdirection);
 		$posx += 40;
 		$pdf->SetXY($posx + 2, $posy + 3);
 		$pdf->SetFont('', 'B', $default_font_size);
@@ -2021,6 +2023,7 @@ class pdf_jdc extends ModelePDFFactures
 		$pdf->SetXY($posx + 2, $posy + 3);
 		$pdf->SetFont('', 'B', $default_font_size);
 		$pdf->MultiCell(40, 4, $bic, 0, $ltrdirection);
+
 
 		$posx = $this->page_largeur - $this->marge_droite - $widthrecbox;
 		$posy += 9;
@@ -2065,6 +2068,11 @@ class pdf_jdc extends ModelePDFFactures
 				}
 			}
 		}
+		if (!$orderRef) {
+			$project = new Project($this->db);
+			$project->fetch($object->fk_project);
+			$orderRef = $project->ref;
+		}
 
 		$pdf->SetFont('', '', $default_font_size);
 
@@ -2077,7 +2085,7 @@ class pdf_jdc extends ModelePDFFactures
 
 		$posy += 7;
 		$pdf->SetXY($posx + 2, $posy);
-		$pdf->MultiCell(40, 4, 'Votre référence : ', 0, 'R', false, 1, $posx, $posy);
+		$pdf->MultiCell(40, 4, 'DESCRIPTION : ', 0, 'R', false, 1, $posx, $posy);
 		$pdf->MultiCell(150, 4, $object->ref_client, 0, 'L', false, 1, $posx+40, $posy);
 
 		$pdf->SetTextColor(0, 0, 0);
@@ -2106,42 +2114,27 @@ class pdf_jdc extends ModelePDFFactures
 		$object->fetch_optionals();
 		dol_syslog(print_r($object->array_options, 1), LOG_DEBUG);
 
-		if ($hidefreetext == 0) {
-			if ($object->array_options['options_tva_mention'] > 0) {
-				$mention = '';
-				switch($object->array_options['options_tva_mention']) {
-					case 1:
-						$mention = 'JdcESToFR';
-						break;
-					case 2:
-						$mention = 'JdcSAToFR';
-						break;
-					case 3:
-						$mention = 'JdcSAToBE';
-						break;
-					case 5:
-						$mention = 'JdcSAToBESelfBilling';
-						break;
-				}
-				$pdf->SetXY($posx, $posy);
-				$pdf->MultiCell(190, 4, $outputlangs->transnoentities($mention), 0, 'L');
-				$posy += 17;
+		if ($object->array_options['options_tva_mention'] > 0) {
+			$mention = '';
+			switch($object->array_options['options_tva_mention']) {
+				case 1:
+					$mention = 'JdcESToFR';
+					break;
+				case 2:
+					$mention = 'JdcSAToFR';
+					break;
+				case 3:
+					$mention = 'JdcSAToBE';
+					break;
 			}
-
+			dol_syslog('==>'.$mention, LOG_INFO);
 			$pdf->SetXY($posx, $posy);
-			$pdf->MultiCell(190, 4, $outputlangs->trans('InvoiceAnyQuestion'), 0, 'L');
-
-			$posy += 15;
-			$pdf->SetXY($posx, $posy);
-			$pdf->MultiCell(190, 4, $outputlangs->transnoentities('Generalities'), 0, 'L');
-
-			$posy += 6;
-			$pdf->SetXY($posx, $posy);
-			$pdf->MultiCell(190, 4, $outputlangs->transnoentities('InvoiceMention1', $object->ref), 0, 'L');
-			$posy += 6;
-			$pdf->SetXY($posx, $posy);
-			$pdf->MultiCell(190, 4, $outputlangs->transnoentities('InvoiceMention2'), 0, 'L');
+			$pdf->MultiCell(190, 4, $outputlangs->transnoentities($mention), 0, 'L');
+			$posy += 10;
 		}
+
+		$pdf->SetXY($posx, $posy);
+		$pdf->MultiCell(190, 4, $outputlangs->trans('FSEAnyQuestion', $object->ref), 0, 'L');
 
 
 		$showdetails = empty($conf->global->MAIN_GENERATE_DOCUMENTS_SHOW_FOOT_DETAILS) ? 1 : $conf->global->MAIN_GENERATE_DOCUMENTS_SHOW_FOOT_DETAILS;
